@@ -23,7 +23,7 @@ License: MIT
 ## 🏠 REPOSITORY INFORMATION
 
 - **GitHub:** https://github.com/ovhlstudio/ovhl-roblox
-- **Core Package:** `/packages/core/`
+- **Core Package:** `/./`
 - **Tools Package:** `/packages/tools/` (Coming Soon)
 
 ## 🏷️ VERSIONING STANDARDS
@@ -120,7 +120,7 @@ service-manager.lua, remote-client.lua
 
 ```mermaid
 graph TD
-    A[packages/core/src/] --> B[server/]
+    A[./src/] --> B[server/]
     A --> C[client/]
     A --> D[shared/]
 
@@ -141,7 +141,7 @@ graph TD
 ### Service Pattern Template
 
 ```lua
--- File: packages/core/src/server/services/ServiceName.lua
+-- File: ./src/server/services/ServiceName.lua
 local ServiceName = {}
 ServiceName.__index = ServiceName
 
@@ -302,7 +302,7 @@ flowchart TD
 ### Test Structure
 
 ```lua
--- File: packages/core/tests/services/test-service-manager.lua
+-- File: ./tests/services/test-service-manager.lua
 local ServiceManager = require("packages.core.src.server.services.ServiceManager")
 
 describe("ServiceManager", function()

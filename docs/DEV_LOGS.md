@@ -23,10 +23,37 @@ License: MIT
 ## 🏠 REPOSITORY INFORMATION
 
 - **GitHub:** https://github.com/ovhlstudio/ovhl-roblox
-- **Core Package:** `/packages/core/`
+- **Core Package:** `/./`
 - **Tools Package:** `/packages/tools/` (Planning Phase)
 
 ## 🗓️ TIMELINE PROGRESS
+
+### 🔧 Auto-Discovery System Implementation (27 Oktober 2025)
+
+**Problem:** Manual module registration tidak scalable dan error-prone
+
+**Solution Implemented:**
+
+1. Manifest system untuk module metadata
+2. Auto-discovery di ServiceManager & ModuleLoader
+3. Dependency resolution system
+4. Domain-based organization
+
+**Files Modified:**
+
+- ✏️ src/server/services/ServiceManager.lua
+- ✏️ src/server/services/ModuleLoader.lua
+- ➕ src/shared/utils/ModuleManifest.lua
+- ➕ src/shared/utils/DependencyResolver.lua
+- ✏️ src/server/init.server.lua
+- ✏️ src/client/init.client.lua
+
+**Migration Path:**
+
+1. Add manifest to existing modules (backward compatible)
+2. Test auto-discovery with existing setup
+3. Gradually remove manual registrations
+4. Full auto mode
 
 ### 🔥 Phase 1: Foundation & Architecture (Oktober 2025 - Current)
 

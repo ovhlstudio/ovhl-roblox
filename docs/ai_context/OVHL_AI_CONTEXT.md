@@ -23,7 +23,7 @@ License: MIT
 ## 🏠 REPOSITORY INFORMATION
 
 - **GitHub:** https://github.com/ovhlstudio/ovhl-roblox
-- **Core Package:** `/packages/core/`
+- **Core Package:** `/./`
 - **Language:** Luau (Roblox)
 - **Architecture:** Service-Oriented + Event-Driven
 
@@ -64,7 +64,7 @@ graph TB
 ### File Structure Rules
 
 ```
-packages/core/src/
+./src/
 ├── server/
 │   ├── services/    # Business logic services
 │   ├── modules/     # Game feature modules
@@ -89,7 +89,7 @@ packages/core/src/
 ### Example 1: Creating a New Service
 
 ```lua
--- File: packages/core/src/server/services/InventoryService.lua
+-- File: ./src/server/services/InventoryService.lua
 local InventoryService = {}
 InventoryService.__index = InventoryService
 
@@ -127,7 +127,7 @@ ServiceManager:RegisterService("InventoryService", InventoryService)
 ### Example 2: Client-Server Communication
 
 ```lua
--- Server: packages/core/src/server/services/EconomyService.lua
+-- Server: ./src/server/services/EconomyService.lua
 RemoteManager:RegisterHandler("PurchaseItem", function(player, itemId)
     local EconomyService = ServiceManager:GetService("EconomyService")
     local success, result = EconomyService:PurchaseItem(player, itemId)
@@ -146,7 +146,7 @@ RemoteManager:RegisterHandler("PurchaseItem", function(player, itemId)
     end
 end)
 
--- Client: packages/core/src/client/modules/ShopUI.lua
+-- Client: ./src/client/modules/ShopUI.lua
 local result = RemoteClient:Invoke("PurchaseItem", "sword_001")
 
 if result.success then
@@ -160,7 +160,7 @@ end
 ### Example 3: UI Component with State
 
 ```lua
--- File: packages/core/src/client/modules/ShopUI.lua
+-- File: ./src/client/modules/ShopUI.lua
 local BaseComponent = require("packages.core.src.client.lib.BaseComponent")
 
 local ShopUI = setmetatable({}, BaseComponent)
@@ -261,7 +261,7 @@ local service = ServiceManager:GetService("SomeService")
 
 ### Common Error Patterns:
 
-1. **"service is not a valid member"** → Check Rojo config paths in `packages/core/default.project.json`
+1. **"service is not a valid member"** → Check Rojo config paths in `./default.project.json`
 2. **Remote connection timeout** → Verify RemoteManager initialization order in `init.server.lua`
 3. **UI not rendering** → Check UIController startup sequence in `init.client.lua`
 4. **Event not firing** → Verify EventBus subscription timing

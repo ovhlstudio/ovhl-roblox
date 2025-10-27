@@ -23,14 +23,14 @@ License: MIT
 ## 🏠 REPOSITORY INFORMATION
 
 - **GitHub:** https://github.com/ovhlstudio/ovhl-roblox
-- **Core Package:** `/packages/core/`
-- **Source:** `packages/core/src/`
+- **Core Package:** `/./`
+- **Source:** `./src/`
 
 ## 🏗️ DIAGRAM RELASI SERVICE
 
 ```mermaid
 graph LR
-    subgraph "📦 PACKAGES/CORE/SRC/SERVER/SERVICES"
+    subgraph "📦 ./SRC/SERVER/SERVICES"
         SM[ServiceManager]
         LG[Logger]
         EB[EventBus]
@@ -40,7 +40,7 @@ graph LR
         ML[ModuleLoader]
     end
 
-    subgraph "📦 PACKAGES/CORE/SRC/CLIENT/CONTROLLERS"
+    subgraph "📦 ./SRC/CLIENT/CONTROLLERS"
         RC[RemoteClient]
         ST[StateManager]
         UE[UIEngine]
@@ -67,7 +67,7 @@ graph LR
 
 ### ServiceManager
 
-**File:** `packages/core/src/server/services/ServiceManager.lua`
+**File:** `./src/server/services/ServiceManager.lua`
 
 ```lua
 -- Initialize service manager
@@ -85,7 +85,7 @@ ServiceManager:GetService(serviceName: string) → table
 
 ### Logger Service
 
-**File:** `packages/core/src/server/services/Logger.lua`
+**File:** `./src/server/services/Logger.lua`
 
 ```lua
 -- Log with specific level
@@ -99,7 +99,7 @@ Logger:Error(message: string, data: table) → boolean
 
 ### EventBus Service
 
-**File:** `packages/core/src/server/services/EventBus.lua`
+**File:** `./src/server/services/EventBus.lua`
 
 ```lua
 -- Subscribe to events
@@ -116,7 +116,7 @@ EventBus:Unsubscribe(eventName: string, callback: function) → boolean
 
 ### RemoteClient
 
-**File:** `packages/core/src/client/controllers/RemoteClient.lua`
+**File:** `./src/client/controllers/RemoteClient.lua`
 
 ```lua
 -- Invoke server function
@@ -134,7 +134,7 @@ RemoteClient:IsConnected() → boolean
 
 ### StateManager
 
-**File:** `packages/core/src/client/controllers/StateManager.lua`
+**File:** `./src/client/controllers/StateManager.lua`
 
 ```lua
 -- Set state value
@@ -152,7 +152,7 @@ StateManager:Unsubscribe(key: string, callback: function) → boolean
 
 ### UIEngine
 
-**File:** `packages/core/src/client/controllers/UIEngine.lua`
+**File:** `./src/client/controllers/UIEngine.lua`
 
 ```lua
 -- Create component instance
@@ -173,7 +173,7 @@ UIEngine:Connect(component: table, signal: RBXScriptSignal, callback: function) 
 ### Basic Service Registration
 
 ```lua
--- File: packages/core/src/server/modules/MyService.lua
+-- File: ./src/server/modules/MyService.lua
 local MyService = {}
 MyService.__index = MyService
 
@@ -189,12 +189,12 @@ ServiceManager:RegisterService("MyService", MyService)
 ### Event Handling Pattern
 
 ```lua
--- Server side (packages/core/src/server/services/ atau modules/)
+-- Server side (./src/server/services/ atau modules/)
 EventBus:Subscribe("PlayerJoined", function(player)
     print("Player joined:", player.Name)
 end)
 
--- Client side (packages/core/src/client/controllers/ atau modules/)
+-- Client side (./src/client/controllers/ atau modules/)
 RemoteClient:Listen("GameStateChanged", function(newState)
     StateManager:Set("gameState", newState)
 end)
@@ -203,7 +203,7 @@ end)
 ### UI Component Implementation
 
 ```lua
--- File: packages/core/src/client/modules/MyComponent.lua
+-- File: ./src/client/modules/MyComponent.lua
 local MyComponent = setmetatable({}, BaseComponent)
 
 function MyComponent:Render()

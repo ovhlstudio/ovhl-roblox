@@ -176,7 +176,7 @@ graph TD
 ### **File Structure:**
 
 ```
-packages/core/src/
+./src/
 ├── client/
 │   ├── modules/
 │   │   └── TestDashboard.lua              # Main dashboard component
@@ -250,9 +250,9 @@ LATEST PROGRESS:
 - Next Priority: [Next immediate action item]
 
 KEY FILES:
-- packages/core/src/client/modules/TestDashboard.lua
-- packages/core/src/client/lib/TestRunner.lua
-- packages/core/src/server/modules/TestService.lua
+- ./src/client/modules/TestDashboard.lua
+- ./src/client/lib/TestRunner.lua
+- ./src/server/modules/TestService.lua
 
 RECENT DECISIONS:
 1. Using comprehensive dashboard approach (not simple 3-button)

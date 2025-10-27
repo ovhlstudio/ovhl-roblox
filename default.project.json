@@ -1,10 +1,10 @@
 {
-  "name": "ovhl-core-v5",
+  "name": "ovhl-core-v6",
   "tree": {
     "$className": "DataModel",
     
     "ServerScriptService": {
-      "$className": "ServerScriptService",
+      "$className": "ServerScriptService", 
       "OVHL_Server": {
         "$path": "src/server"
       }
@@ -14,14 +14,11 @@
       "$className": "ReplicatedStorage",
       "OVHL_Shared": {
         "$path": "src/shared"
-      },
-      "OVHL_Client": {
-        "$path": "src/client"
       }
     },
     
     "StarterPlayer": {
-      "$className": "StarterPlayer",
+      "$className": "StarterPlayer", 
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
         "OVHL_Client": {

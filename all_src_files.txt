@@ -1,0 +1,1736 @@
+================================
+FILE: ./src/client/controllers/RemoteClient.lua
+================================
+-- RemoteClient v5 - Simple Communication
+local RemoteClient = {}
+RemoteClient.__index = RemoteClient
+
+function RemoteClient:Init()
+    self.connected = false
+    print("🔧 RemoteClient initialized")
+    return true
+end
+
+function RemoteClient:Start()
+    print("📡 RemoteClient connecting...")
+    
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local startTime = tick()
+    
+    while tick() - startTime < 10 do
+        local success = pcall(function()
+            self.remoteFolder = ReplicatedStorage:WaitForChild("OVHL_Remotes", 1)
+            if self.remoteFolder then
+                self.mainEvent = self.remoteFolder:WaitForChild("MainRemoteEvent", 1)
+                self.mainFunction = self.remoteFolder:WaitForChild("MainRemoteFunction", 1)
+            end
+        end)
+        
+        if success and self.mainEvent and self.mainFunction then
+            self.connected = true
+            print("✅ RemoteClient connected!")
+            return true
+        end
+        wait(0.5)
+    end
+    
+    warn("❌ RemoteClient failed to connect")
+    return false
+end
+
+function RemoteClient:Invoke(eventName, ...)
+    if not self.connected then return false, "Not connected" end
+    
+    local args = {...}
+    local success, result = pcall(function()
+        return self.mainFunction:InvokeServer(eventName, unpack(args))
+    end)
+    
+    if success then
+        return result
+    else
+        return false, result
+    end
+end
+
+function RemoteClient:Listen(eventName, callback)
+    if not self.connected then return function() end end
+    
+    return self.mainEvent.OnClientEvent:Connect(function(receivedEventName, ...)
+        if receivedEventName == eventName then
+            local args = {...}
+            callback(unpack(args))
+        end
+    end)
+end
+
+function RemoteClient:Fire(eventName, ...)
+    if not self.connected then return false end
+    self.mainEvent:FireServer(eventName, ...)
+    return true
+end
+
+return RemoteClient
+
+
+================================
+FILE: ./src/client/controllers/StateManager.lua
+================================
+-- StateManager v5 - Simple State
+local StateManager = {}
+StateManager.__index = StateManager
+
+function StateManager:Init()
+    self.state = {}
+    self.listeners = {}
+    print("🔧 StateManager initialized")
+    return true
+end
+
+function StateManager:Start()
+    print("🔄 StateManager started")
+    return true
+end
+
+function StateManager:Set(key, value)
+    local oldValue = self.state[key]
+    self.state[key] = value
+    
+    if self.listeners[key] then
+        for _, callback in ipairs(self.listeners[key]) do
+            local success, err = pcall(callback, value, oldValue)
+            if not success then
+                warn("❌ State listener error:", err)
+            end
+        end
+    end
+    return true
+end
+
+function StateManager:Get(key, defaultValue)
+    return self.state[key] or defaultValue
+end
+
+function StateManager:Subscribe(key, callback)
+    if not self.listeners[key] then
+        self.listeners[key] = {}
+    end
+    table.insert(self.listeners[key], callback)
+    
+    return function()
+        self:Unsubscribe(key, callback)
+    end
+end
+
+function StateManager:Unsubscribe(key, callback)
+    if self.listeners[key] then
+        for i, cb in ipairs(self.listeners[key]) do
+            if cb == callback then
+                table.remove(self.listeners[key], i)
+                break
+            end
+        end
+    end
+end
+
+return StateManager
+
+
+================================
+FILE: ./src/client/controllers/StyleManager.lua
+================================
+-- StyleManager v5 - Simple Theming
+local StyleManager = {}
+StyleManager.__index = StyleManager
+
+function StyleManager:Init()
+    self.theme = "Dark"
+    print("🔧 StyleManager initialized")
+    return true
+end
+
+function StyleManager:Start()
+    print("🎨 StyleManager started")
+    return true
+end
+
+function StyleManager:GetColor(colorName)
+    local colors = {
+        primary = Color3.fromRGB(66, 135, 245),
+        background = Color3.fromRGB(30, 30, 40),
+        surface = Color3.fromRGB(40, 40, 50),
+        text = Color3.fromRGB(255, 255, 255),
+        success = Color3.fromRGB(40, 167, 69),
+        error = Color3.fromRGB(220, 53, 69)
+    }
+    return colors[colorName] or Color3.new(1, 1, 1)
+end
+
+return StyleManager
+
+
+================================
+FILE: ./src/client/controllers/UIController.lua
+================================
+-- UIController v5 - Simple UI Management
+local UIController = {}
+UIController.__index = UIController
+
+function UIController:Init()
+    self.screens = {}
+    print("🔧 UIController initialized")
+    return true
+end
+
+function UIController:Start()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+    
+    -- Create UI
+    self.screenGui = Instance.new("ScreenGui")
+    self.screenGui.Name = "OVHL_UI"
+    self.screenGui.ResetOnSpawn = false
+    self.screenGui.Parent = playerGui
+    
+    self.container = Instance.new("Frame")
+    self.container.Size = UDim2.new(1, 0, 1, 0)
+    self.container.BackgroundTransparency = 1
+    self.container.Parent = self.screenGui
+    
+    print("🖥️ UIController started")
+    return true
+end
+
+function UIController:RegisterScreen(screenName, screenComponent)
+    self.screens[screenName] = screenComponent
+    return true
+end
+
+function UIController:ShowScreen(screenName, props)
+    local screenComponent = self.screens[screenName]
+    if not screenComponent then
+        warn("❌ Screen not found:", screenName)
+        return false
+    end
+    
+    local UIEngine = require(script.Parent.UIEngine)
+    local screenInstance = UIEngine:CreateComponent(screenComponent, props)
+    UIEngine:Mount(screenInstance, self.container)
+    
+    print("🖥️ Screen shown:", screenName)
+    return true
+end
+
+return UIController
+
+
+================================
+FILE: ./src/client/controllers/UIEngine.lua
+================================
+-- UIEngine v5 - Simple UI
+local UIEngine = {}
+UIEngine.__index = UIEngine
+
+function UIEngine:Init()
+    self.components = {}
+    print("🔧 UIEngine initialized")
+    return true
+end
+
+function UIEngine:Start()
+    print("🎨 UIEngine started")
+    return true
+end
+
+function UIEngine:CreateComponent(ComponentClass, props)
+    local component = setmetatable({}, ComponentClass)
+    component.props = props or {}
+    component.state = {}
+    component._uiEngine = self
+    
+    if component.Init then
+        pcall(component.Init, component)
+    end
+    
+    return component
+end
+
+function UIEngine:Mount(component, parent)
+    if not component.Render then
+        error("Component must have Render method")
+    end
+    
+    local instance = component:Render()
+    if not instance then
+        error("Render must return Instance")
+    end
+    
+    instance.Parent = parent
+    component._instance = instance
+    
+    if component.DidMount then
+        pcall(component.DidMount, component)
+    end
+    
+    return instance
+end
+
+function UIEngine:Unmount(component)
+    if component.WillUnmount then
+        pcall(component.WillUnmount, component)
+    end
+    
+    if component._instance then
+        component._instance:Destroy()
+    end
+end
+
+return UIEngine
+
+
+================================
+FILE: ./src/client/init.client.lua
+================================
+-- OVHL CLIENT BOOTSTRAP v5 - FIXED STRUCTURE
+print("🎮 [OVHL] Client bootstrap starting...")
+
+local success, err = pcall(function()
+    -- WAIT FOR CONTROLLERS FOLDER
+    local controllersFolder = script:WaitForChild("controllers")
+    
+    -- Initialize controllers
+    local RemoteClient = require(controllersFolder.RemoteClient)
+    local StateManager = require(controllersFolder.StateManager)
+    local UIEngine = require(controllersFolder.UIEngine)
+    local UIController = require(controllersFolder.UIController)
+    local StyleManager = require(controllersFolder.StyleManager)
+    
+    local remoteClient = setmetatable({}, RemoteClient)
+    local stateManager = setmetatable({}, StateManager)
+    local uiEngine = setmetatable({}, UIEngine)
+    local uiController = setmetatable({}, UIController)
+    local styleManager = setmetatable({}, StyleManager)
+    
+    -- Initialize in order
+    remoteClient:Init()
+    stateManager:Init()
+    uiEngine:Init()
+    uiController:Init()
+    styleManager:Init()
+    
+    -- Start all controllers
+    remoteClient:Start()
+    stateManager:Start()
+    uiController:Start()
+    styleManager:Start()
+    
+    -- Set initial state
+    stateManager:Set("coins", 1000)
+    stateManager:Set("gems", 100)
+    stateManager:Set("level", 1)
+    stateManager:Set("health", 100)
+    stateManager:Set("maxHealth", 100)
+    
+    -- Try to load HUD
+    local modulesFolder = script:FindFirstChild("modules")
+    if modulesFolder then
+        local HUD = modulesFolder:FindFirstChild("HUD")
+        if HUD then
+            local hudModule = require(HUD)
+            uiController:RegisterScreen("GameHUD", hudModule)
+            uiController:ShowScreen("GameHUD")
+            print("✅ HUD loaded and shown!")
+        end
+    end
+    
+    print("✅ [OVHL] Client bootstrap completed successfully!")
+    
+    return {
+        RemoteClient = remoteClient,
+        StateManager = stateManager,
+        UIEngine = uiEngine,
+        UIController = uiController,
+        StyleManager = styleManager
+    }
+end)
+
+if not success then
+    warn("❌ [OVHL] Client bootstrap failed:", err)
+end
+
+
+================================
+FILE: ./src/client/lib/BaseComponent.lua
+================================
+-- BaseComponent v5 - Simple Base
+local BaseComponent = {}
+BaseComponent.__index = BaseComponent
+
+function BaseComponent:Init()
+    self.state = self.state or {}
+end
+
+function BaseComponent:SetState(newState)
+    if type(newState) == "function" then
+        newState = newState(self.state)
+    end
+    
+    self.state = newState
+    
+    if self._instance and self._uiEngine then
+        self._uiEngine:Unmount(self)
+        self._uiEngine:Mount(self, self._instance.Parent)
+    end
+end
+
+return BaseComponent
+
+
+================================
+FILE: ./src/client/lib/ui/Button.lua
+================================
+local StyleManager = require(script.Parent.Parent.controllers.StyleManager)
+
+local Button = {}
+Button.__index = Button
+
+function Button:Create(props)
+    local button = Instance.new("TextButton")
+    button.Text = props.text or "Button"
+    button.Size = props.size or UDim2.fromOffset(120, 40)
+    button.BackgroundColor3 = props.backgroundColor or StyleManager:GetColor("primary")
+    button.TextColor3 = props.textColor or Color3.new(1, 1, 1)
+    button.TextSize = props.textSize or 14
+    button.Font = Enum.Font.Gotham
+    button.AutoButtonColor = props.autoButtonColor ~= false
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, props.cornerRadius or 6)
+    corner.Parent = button
+    
+    if props.onClick then
+        button.MouseButton1Click:Connect(props.onClick)
+    end
+    
+    return button
+end
+
+return Button
+
+
+================================
+FILE: ./src/client/lib/ui/examples/TestDashboard.example.lua
+================================
+-- Example: How to use UI library for TestDashboard
+local UI = require(script.Parent.Parent.ui)
+local StyleManager = require(script.Parent.Parent.Parent.controllers.StyleManager)
+
+local function CreateTestDashboard()
+    local dashboard = UI.Panel:Create({
+        size = UDim2.new(1, 0, 1, 0),
+        backgroundColor = StyleManager:GetColor("background")
+    })
+    
+    -- Header
+    local header = UI.Text:Create({
+        text = "🚀 OVHL TEST DASHBOARD",
+        textSize = 24,
+        fontStyle = "bold",
+        size = UDim2.new(1, 0, 0, 40)
+    })
+    header.Parent = dashboard
+    
+    -- Status Section
+    local statusSection = UI.Utils.CreateSection("📊 SYSTEM STATUS", 100)
+    statusSection.Position = UDim2.new(0, 0, 0, 50)
+    statusSection.Parent = dashboard
+    
+    -- Test Controls
+    local controlsSection = UI.Utils.CreateSection("🎯 TEST CONTROLS", 120)
+    controlsSection.Position = UDim2.new(0, 0, 0, 170)
+    controlsSection.Parent = dashboard
+    
+    -- Add buttons to controls section
+    local pingButton = UI.Button:Create({
+        text = "🏓 Ping Test",
+        size = UDim2.new(0.3, 0, 0, 30),
+        position = UDim2.new(0, 15, 0, 30),
+        onClick = function()
+            print("Ping test started")
+        end
+    })
+    pingButton.Parent = controlsSection
+    
+    local eventButton = UI.Button:Create({
+        text = "📡 Event Test",
+        size = UDim2.new(0.3, 0, 0, 30),
+        position = UDim2.new(0.35, 0, 0, 30),
+        onClick = function()
+            print("Event test started")
+        end
+    })
+    eventButton.Parent = controlsSection
+    
+    local dataButton = UI.Button:Create({
+        text = "💾 Data Test",
+        size = UDim2.new(0.3, 0, 0, 30),
+        position = UDim2.new(0.7, 0, 0, 30),
+        onClick = function()
+            print("Data test started")
+        end
+    })
+    dataButton.Parent = controlsSection
+    
+    -- Results Section
+    local resultsSection = UI.Utils.CreateSection("📋 TEST RESULTS", 200)
+    resultsSection.Position = UDim2.new(0, 0, 0, 310)
+    resultsSection.Parent = dashboard
+    
+    return dashboard
+end
+
+return CreateTestDashboard
+
+
+================================
+FILE: ./src/client/lib/ui/Form.lua
+================================
+local StyleManager = require(script.Parent.Parent.controllers.StyleManager)
+
+local Form = {}
+Form.__index = Form
+
+function Form:CreateInput(props)
+    local container = Instance.new("Frame")
+    container.Size = props.size or UDim2.new(1, 0, 0, 60)
+    container.BackgroundTransparency = 1
+    
+    local label = Instance.new("TextLabel")
+    label.Text = props.label or "Input"
+    label.Size = UDim2.new(1, 0, 0, 20)
+    label.TextColor3 = StyleManager:GetColor("text")
+    label.TextSize = 12
+    label.BackgroundTransparency = 1
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
+    
+    local input = Instance.new("TextBox")
+    input.Size = UDim2.new(1, 0, 0, 35)
+    input.Position = UDim2.new(0, 0, 0, 25)
+    input.PlaceholderText = props.placeholder or ""
+    input.Text = props.text or ""
+    input.BackgroundColor3 = StyleManager:GetColor("surface")
+    input.TextColor3 = StyleManager:GetColor("text")
+    input.TextSize = 14
+    input.Parent = container
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = input
+    
+    local padding = Instance.new("UIPadding")
+    padding.PaddingLeft = UDim.new(0, 8)
+    padding.PaddingRight = UDim.new(0, 8)
+    padding.Parent = input
+    
+    return container, input
+end
+
+return Form
+
+
+================================
+FILE: ./src/client/lib/ui/init.lua
+================================
+local UI = {}
+
+UI.Panel = require(script.Panel)
+UI.Button = require(script.Button)
+UI.Text = require(script.Text)
+UI.Layout = require(script.Layout)
+UI.Form = require(script.Form)
+UI.Utils = require(script.UIUtils)
+
+return UI
+
+
+================================
+FILE: ./src/client/lib/ui/Layout.lua
+================================
+local Layout = {}
+Layout.__index = Layout
+
+function Layout:CreateVertical(parent, spacing)
+    local layout = Instance.new("UIListLayout")
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, spacing or 5)
+    layout.Parent = parent
+    return layout
+end
+
+function Layout:CreateHorizontal(parent, spacing)
+    local layout = Instance.new("UIListLayout")
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, spacing or 5)
+    layout.FillDirection = Enum.FillDirection.Horizontal
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    layout.VerticalAlignment = Enum.VerticalAlignment.Center
+    layout.Parent = parent
+    return layout
+end
+
+function Layout:CreateGrid(parent, cellPadding)
+    local layout = Instance.new("UIGridLayout")
+    layout.CellPadding = UDim2.new(0, cellPadding or 5, 0, cellPadding or 5)
+    layout.CellSize = UDim2.new(0, 100, 0, 100)
+    layout.Parent = parent
+    return layout
+end
+
+return Layout
+
+
+================================
+FILE: ./src/client/lib/ui/Panel.lua
+================================
+local StyleManager = require(script.Parent.Parent.controllers.StyleManager)
+
+local Panel = {}
+Panel.__index = Panel
+
+function Panel:Create(props)
+    local panel = Instance.new("Frame")
+    panel.Size = props.size or UDim2.fromScale(1, 1)
+    panel.BackgroundColor3 = props.backgroundColor or StyleManager:GetColor("surface")
+    panel.BackgroundTransparency = props.backgroundTransparency or 0.1
+    panel.BorderSizePixel = 0
+    
+    if props.cornerRadius then
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, props.cornerRadius)
+        corner.Parent = panel
+    end
+    
+    if props.padding then
+        local padding = Instance.new("UIPadding")
+        padding.PaddingLeft = UDim.new(0, props.padding.left or 10)
+        padding.PaddingRight = UDim.new(0, props.padding.right or 10)
+        padding.PaddingTop = UDim.new(0, props.padding.top or 10)
+        padding.PaddingBottom = UDim.new(0, props.padding.bottom or 10)
+        padding.Parent = panel
+    end
+    
+    return panel
+end
+
+return Panel
+
+
+================================
+FILE: ./src/client/lib/ui/templates/dashboard.template.lua
+================================
+-- Dashboard Template
+return function(props)
+    local UI = require(script.Parent.Parent.Parent.ui)
+    
+    local dashboard = UI.Panel:Create({
+        size = UDim2.new(1, 0, 1, 0),
+        backgroundColor = props.backgroundColor,
+        padding = {left = 20, right = 20, top = 20, bottom = 20}
+    })
+    
+    -- Header Section
+    local header = UI.Utils.CreateSection("🚀 " .. (props.title or "Dashboard"), 60)
+    header.Parent = dashboard
+    
+    -- Content Section
+    local content = UI.Panel:Create({
+        size = UDim2.new(1, 0, 1, -140),
+        position = UDim2.new(0, 0, 0, 80),
+        backgroundTransparency = 1
+    })
+    content.Parent = dashboard
+    
+    return dashboard
+end
+
+
+================================
+FILE: ./src/client/lib/ui/templates/form.template.lua
+================================
+-- Form Template
+return function(props)
+    local UI = require(script.Parent.Parent.Parent.ui)
+    
+    local form = UI.Panel:Create({
+        size = props.size or UDim2.new(1, 0, 0, 300),
+        backgroundColor = props.backgroundColor,
+        padding = {left = 20, right = 20, top = 20, bottom = 20},
+        cornerRadius = 8
+    })
+    
+    
+    return form
+end
+
+
+================================
+FILE: ./src/client/lib/ui/Text.lua
+================================
+local StyleManager = require(script.Parent.Parent.controllers.StyleManager)
+
+local Text = {}
+Text.__index = Text
+
+function Text:Create(props)
+    local text = Instance.new("TextLabel")
+    text.Text = props.text or ""
+    text.Size = props.size or UDim2.new(1, 0, 0, 20)
+    text.TextColor3 = props.textColor or StyleManager:GetColor("text")
+    text.TextSize = props.textSize or 14
+    text.Font = props.font or Enum.Font.Gotham
+    text.BackgroundTransparency = 1
+    text.TextXAlignment = props.alignX or Enum.TextXAlignment.Left
+    text.TextYAlignment = props.alignY or Enum.TextYAlignment.Center
+    text.TextWrapped = props.wrapped or true
+    
+    if props.fontStyle == "bold" then
+        text.Font = Enum.Font.GothamBold
+    elseif props.fontStyle == "semibold" then
+        text.Font = Enum.Font.GothamMedium
+    end
+    
+    return text
+end
+
+return Text
+
+
+================================
+FILE: ./src/client/lib/ui/UIUtils.lua
+================================
+local StyleManager = require(script.Parent.Parent.controllers.StyleManager)
+
+local UIUtils = {}
+
+function UIUtils.CreateSection(title, height)
+    local section = Instance.new("Frame")
+    section.Size = UDim2.new(1, 0, 0, height or 100)
+    section.BackgroundColor3 = StyleManager:GetColor("surface")
+    section.BackgroundTransparency = 0.1
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = section
+    
+    local padding = Instance.new("UIPadding")
+    padding.PaddingLeft = UDim.new(0, 15)
+    padding.PaddingRight = UDim.new(0, 15)
+    padding.PaddingTop = UDim.new(0, 10)
+    padding.PaddingBottom = UDim.new(0, 10)
+    padding.Parent = section
+    
+    if title then
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Text = title
+        titleLabel.TextColor3 = StyleManager:GetColor("text")
+        titleLabel.TextSize = 16
+        titleLabel.Size = UDim2.new(1, 0, 0, 20)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Font = Enum.Font.GothamSemibold
+        titleLabel.Parent = section
+    end
+    
+    return section
+end
+
+function UIUtils.CreateScrollContainer(height)
+    local container = Instance.new("ScrollingFrame")
+    container.Size = UDim2.new(1, 0, 0, height or 200)
+    container.BackgroundTransparency = 1
+    container.ScrollBarThickness = 6
+    container.CanvasSize = UDim2.new(0, 0, 0, 0)
+    
+    return container
+end
+
+function UIUtils.AddToScrollContainer(scrollFrame, item, itemHeight)
+    item.Parent = scrollFrame
+    item.LayoutOrder = #scrollFrame:GetChildren()
+    
+    local currentSize = scrollFrame.CanvasSize
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, currentSize.Y.Offset + itemHeight)
+end
+
+return UIUtils
+
+
+================================
+FILE: ./src/client/modules/HUD.lua
+================================
+-- HUD v5 - Simple HUD
+local BaseComponent = require(script.Parent.Parent.lib.BaseComponent)
+
+local HUD = setmetatable({}, BaseComponent)
+HUD.__index = HUD
+
+function HUD:Init()
+    BaseComponent.Init(self)
+    self.state = {
+        coins = 1000,
+        gems = 100,
+        level = 1,
+        health = 100
+    }
+end
+
+function HUD:Render()
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(1, 0, 1, 0)
+    container.BackgroundTransparency = 1
+    
+    -- Top bar with coins and gems
+    local topBar = Instance.new("Frame")
+    topBar.Size = UDim2.new(1, 0, 0, 50)
+    topBar.Position = UDim2.new(0, 0, 0, 10)
+    topBar.BackgroundTransparency = 1
+    topBar.Parent = container
+    
+    local coinsLabel = Instance.new("TextLabel")
+    coinsLabel.Text = "💰 " .. self.state.coins
+    coinsLabel.Size = UDim2.new(0, 100, 0, 40)
+    coinsLabel.Position = UDim2.new(0, 20, 0, 0)
+    coinsLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    coinsLabel.TextColor3 = Color3.new(1, 1, 1)
+    coinsLabel.TextSize = 16
+    coinsLabel.Parent = topBar
+    
+    local gemsLabel = Instance.new("TextLabel")
+    gemsLabel.Text = "💎 " .. self.state.gems
+    gemsLabel.Size = UDim2.new(0, 100, 0, 40)
+    gemsLabel.Position = UDim2.new(0, 140, 0, 0)
+    gemsLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    gemsLabel.TextColor3 = Color3.new(1, 1, 1)
+    gemsLabel.TextSize = 16
+    gemsLabel.Parent = topBar
+    
+    local levelLabel = Instance.new("TextLabel")
+    levelLabel.Text = "⭐ Lv. " .. self.state.level
+    levelLabel.Size = UDim2.new(0, 100, 0, 40)
+    levelLabel.Position = UDim2.new(0, 260, 0, 0)
+    levelLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    levelLabel.TextColor3 = Color3.new(1, 1, 1)
+    levelLabel.TextSize = 16
+    levelLabel.Parent = topBar
+    
+    -- Health bar
+    local healthContainer = Instance.new("Frame")
+    healthContainer.Size = UDim2.new(0, 200, 0, 30)
+    healthContainer.Position = UDim2.new(0, 20, 1, -50)
+    healthContainer.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    healthContainer.Parent = container
+    
+    local healthBar = Instance.new("Frame")
+    healthBar.Size = UDim2.new(self.state.health / 100, 0, 1, 0)
+    healthBar.BackgroundColor3 = Color3.fromRGB(40, 167, 69)
+    healthBar.BorderSizePixel = 0
+    healthBar.Parent = healthContainer
+    
+    local healthLabel = Instance.new("TextLabel")
+    healthLabel.Text = "❤️ " .. self.state.health .. "/100"
+    healthLabel.Size = UDim2.new(1, 0, 1, 0)
+    healthLabel.BackgroundTransparency = 1
+    healthLabel.TextColor3 = Color3.new(1, 1, 1)
+    healthLabel.TextSize = 14
+    healthLabel.Parent = healthContainer
+    
+    return container
+end
+
+return HUD
+
+
+================================
+FILE: ./src/client/modules/TestDashboard.lua
+================================
+local BaseComponent = require(script.Parent.Parent.lib.BaseComponent)
+local UI = require(script.Parent.Parent.lib.ui)
+local StyleManager = require(script.Parent.Parent.controllers.StyleManager)
+
+local TestDashboard = setmetatable({}, BaseComponent)
+TestDashboard.__index = TestDashboard
+
+function TestDashboard:Init()
+	BaseComponent.Init(self)
+
+	self.state = {
+		-- Service Status
+		servicesStatus = {},
+		connectionStatus = "Disconnected",
+
+		-- Test Results
+		testResults = {},
+		currentTest = nil,
+		isTesting = false,
+
+		-- Performance Metrics
+		performanceMetrics = {
+			serverPing = 0,
+			serviceStartup = 0,
+			eventLatency = 0,
+			lastUpdate = os.time(),
+		},
+	}
+
+	print("🔧 TestDashboard initialized with UI Library")
+	return true
+end
+
+function TestDashboard:DidMount()
+	-- Setup real-time monitoring
+	self:StartServiceMonitoring()
+	self:SetupEventListeners()
+
+	print("🎯 TestDashboard mounted with UI Library")
+end
+
+function TestDashboard:StartServiceMonitoring()
+	-- Monitor service health setiap 5 detik
+	while self._instance and self._instance.Parent do
+		self:CheckServiceHealth()
+		self:UpdatePerformanceMetrics()
+		wait(5)
+	end
+end
+
+function TestDashboard:CheckServiceHealth()
+	local RemoteClient = require(script.Parent.Parent.controllers.RemoteClient)
+	local servicesStatus = {}
+
+	-- Check RemoteClient connection
+	servicesStatus.RemoteClient = RemoteClient:IsConnected() and "✅ Connected" or "❌ Disconnected"
+	servicesStatus.StateManager = "✅ Active"
+	servicesStatus.UIEngine = "✅ Ready"
+
+	-- Update connection status
+	self.connectionStatus = RemoteClient:IsConnected() and "Connected" or "Disconnected"
+
+	self:SetState({
+		servicesStatus = servicesStatus,
+		connectionStatus = self.connectionStatus,
+	})
+end
+
+function TestDashboard:UpdatePerformanceMetrics()
+	-- Simulate performance metrics
+	local metrics = {
+		serverPing = math.random(20, 100),
+		serviceStartup = math.random(50, 150),
+		eventLatency = math.random(5, 30),
+		lastUpdate = os.time(),
+	}
+
+	self:SetState({
+		performanceMetrics = metrics,
+	})
+end
+
+function TestDashboard:RunPingTest()
+	if self.state.isTesting then
+		return
+	end
+
+	self:SetState({
+		isTesting = true,
+		currentTest = "Ping Test",
+	})
+
+	local RemoteClient = require(script.Parent.Parent.controllers.RemoteClient)
+
+	local startTime = os.clock()
+
+	local success, result = pcall(function()
+		return RemoteClient:Invoke("Test:Ping", {
+			message = "Ping from TestDashboard",
+			timestamp = os.time(),
+		})
+	end)
+
+	local endTime = os.clock()
+	local responseTime = math.floor((endTime - startTime) * 1000)
+
+	local testResult = {
+		testName = "Ping Test",
+		success = success,
+		responseTime = responseTime,
+		result = result,
+		timestamp = os.time(),
+	}
+
+	local newResults = { testResult }
+	for _, existing in ipairs(self.state.testResults) do
+		table.insert(newResults, existing)
+	end
+
+	self:SetState({
+		testResults = newResults,
+		isTesting = false,
+		currentTest = nil,
+	})
+
+	print(success and "✅ Ping test completed" or "❌ Ping test failed")
+end
+
+function TestDashboard:RunEventTest()
+	if self.state.isTesting then
+		return
+	end
+
+	self:SetState({
+		isTesting = true,
+		currentTest = "Event Test",
+	})
+
+	local EventBus = require(script.Parent.Parent.Parent.server.services.EventBus)
+
+	local testEventName = "TestDashboard_Event_" .. tostring(math.random(1000, 9999))
+	local eventReceived = false
+	local testData = { message = "Test event", number = 42 }
+
+	-- Subscribe to test event
+	local unsubscribe = EventBus:Subscribe(testEventName, function(receivedData)
+		eventReceived = true
+		print("📨 Event received:", receivedData)
+	end)
+
+	-- Emit test event
+	EventBus:Emit(testEventName, testData)
+
+	-- Wait a bit for event to be processed
+	wait(0.5)
+
+	-- Cleanup
+	unsubscribe()
+
+	local testResult = {
+		testName = "Event Test",
+		success = eventReceived,
+		result = eventReceived and "Event delivered successfully" or "Event not received",
+		timestamp = os.time(),
+	}
+
+	local newResults = { testResult }
+	for _, existing in ipairs(self.state.testResults) do
+		table.insert(newResults, existing)
+	end
+
+	self:SetState({
+		testResults = newResults,
+		isTesting = false,
+		currentTest = nil,
+	})
+
+	print(eventReceived and "✅ Event test completed" or "❌ Event test failed")
+end
+
+function TestDashboard:RunDataTest()
+	if self.state.isTesting then
+		return
+	end
+
+	self:SetState({
+		isTesting = true,
+		currentTest = "Data Test",
+	})
+
+	local DataService = require(script.Parent.Parent.Parent.server.services.DataService)
+
+	local success, playerData = pcall(function()
+		return DataService:GetPlayerData(game.Players.LocalPlayer, "MainData")
+	end)
+
+	local testResult = {
+		testName = "Data Test",
+		success = success,
+		result = success and "Data loaded: " .. tostring(playerData.coins) .. " coins" or "Failed to load data",
+		timestamp = os.time(),
+	}
+
+	local newResults = { testResult }
+	for _, existing in ipairs(self.state.testResults) do
+		table.insert(newResults, existing)
+	end
+
+	self:SetState({
+		testResults = newResults,
+		isTesting = false,
+		currentTest = nil,
+	})
+
+	print(success and "✅ Data test completed" or "❌ Data test failed")
+end
+
+function TestDashboard:ClearTestResults()
+	self:SetState({
+		testResults = {},
+	})
+end
+
+-- ==================== UI RENDERING WITH UI LIBRARY ====================
+
+function TestDashboard:Render()
+	-- Use UI Library untuk semua rendering
+	local dashboard = UI.Panel:Create({
+		size = UDim2.fromScale(1, 1),
+		backgroundColor = StyleManager:GetColor("background"),
+		padding = { left = 20, right = 20, top = 20, bottom = 20 },
+	})
+
+	-- Header
+	local header = self:RenderHeader()
+	header.Parent = dashboard
+
+	-- Status Section
+	local statusSection = self:RenderStatusSection()
+	statusSection.Position = UDim2.fromOffset(0, 60)
+	statusSection.Parent = dashboard
+
+	-- Controls Section
+	local controlsSection = self:RenderControlsSection()
+	controlsSection.Position = UDim2.fromOffset(0, 180)
+	controlsSection.Parent = dashboard
+
+	-- Results Section
+	local resultsSection = self:RenderResultsSection()
+	resultsSection.Position = UDim2.fromOffset(0, 320)
+	resultsSection.Parent = dashboard
+
+	return dashboard
+end
+
+function TestDashboard:RenderHeader()
+	local header = UI.Panel:Create({
+		size = UDim2.new(1, 0, 0, 50),
+		backgroundTransparency = 1,
+	})
+
+	local title = UI.Text:Create({
+		text = "🚀 OVHL TEST DASHBOARD",
+		textSize = 24,
+		fontStyle = "bold",
+		alignX = Enum.TextXAlignment.Center,
+	})
+	title.Parent = header
+
+	return header
+end
+
+function TestDashboard:RenderStatusSection()
+	local section = UI.Utils.CreateSection("📊 SYSTEM STATUS", 110)
+
+	-- Connection Status
+	local connectionText = UI.Text:Create({
+		text = "Connection: " .. self.state.connectionStatus,
+		textColor = self.state.connectionStatus == "Connected" and StyleManager:GetColor("success")
+			or StyleManager:GetColor("error"),
+		textSize = 14,
+		position = UDim2.fromOffset(15, 30),
+	})
+	connectionText.Parent = section
+
+	-- Performance Metrics
+	local metricsText = UI.Text:Create({
+		text = string.format(
+			"Ping: %dms | Services: %dms | Events: %dms",
+			self.state.performanceMetrics.serverPing,
+			self.state.performanceMetrics.serviceStartup,
+			self.state.performanceMetrics.eventLatency
+		),
+		textSize = 12,
+		textColor = StyleManager:GetColor("textSecondary"),
+		position = UDim2.fromOffset(15, 55),
+	})
+	metricsText.Parent = section
+
+	-- Services Status
+	local servicesText = UI.Text:Create({
+		text = "Services: " .. (self.state.servicesStatus.RemoteClient or "Checking..."),
+		textSize = 12,
+		textColor = StyleManager:GetColor("textSecondary"),
+		position = UDim2.fromOffset(15, 80),
+	})
+	servicesText.Parent = section
+
+	return section
+end
+
+function TestDashboard:RenderControlsSection()
+	local section = UI.Utils.CreateSection("🎯 TEST CONTROLS", 120)
+
+	-- Test Buttons menggunakan UI Library
+	local pingButton = UI.Button:Create({
+		text = "🏓 Ping Test",
+		size = UDim2.new(0.3, 0, 0, 30),
+		position = UDim2.fromOffset(15, 30),
+		onClick = function()
+			self:RunPingTest()
+		end,
+	})
+	pingButton.Parent = section
+
+	local eventButton = UI.Button:Create({
+		text = "📡 Event Test",
+		size = UDim2.new(0.3, 0, 0, 30),
+		position = UDim2.new(0.35, 0, 0, 30),
+		onClick = function()
+			self:RunEventTest()
+		end,
+	})
+	eventButton.Parent = section
+
+	local dataButton = UI.Button:Create({
+		text = "💾 Data Test",
+		size = UDim2.new(0.3, 0, 0, 30),
+		position = UDim2.new(0.7, 0, 0, 30),
+		onClick = function()
+			self:RunDataTest()
+		end,
+	})
+	dataButton.Parent = section
+
+	-- Clear Results Button
+	local clearButton = UI.Button:Create({
+		text = "🗑️ Clear Results",
+		size = UDim2.new(0.3, 0, 0, 25),
+		position = UDim2.fromOffset(15, 70),
+		backgroundColor = StyleManager:GetColor("error"),
+		onClick = function()
+			self:ClearTestResults()
+		end,
+	})
+	clearButton.Parent = section
+
+	-- Current Test Indicator
+	local testIndicator = UI.Text:Create({
+		text = self.state.currentTest and "Running: " .. self.state.currentTest or "Ready for tests",
+		textColor = self.state.isTesting and StyleManager:GetColor("warning") or StyleManager:GetColor("success"),
+		textSize = 12,
+		size = UDim2.new(0.6, 0, 0, 25),
+		position = UDim2.new(0.35, 0, 0, 70),
+	})
+	testIndicator.Parent = section
+
+	return section
+end
+
+function TestDashboard:RenderResultsSection()
+	local section = UI.Utils.CreateSection("📋 TEST RESULTS", 200)
+
+	local scrollContainer = UI.Utils.CreateScrollContainer(160)
+	scrollContainer.Position = UDim2.fromOffset(0, 25)
+	scrollContainer.Parent = section
+
+	-- Populate with test results
+	self:PopulateTestResults(scrollContainer)
+
+	return section
+end
+
+function TestDashboard:PopulateTestResults(scrollContainer)
+	-- Clear existing results
+	for _, child in ipairs(scrollContainer:GetChildren()) do
+		if child:IsA("Frame") then
+			child:Destroy()
+		end
+	end
+
+	-- Add test result items
+	for i, result in ipairs(self.state.testResults) do
+		local resultItem = UI.Panel:Create({
+			size = UDim2.new(1, -10, 0, 40),
+			backgroundColor = result.success and StyleManager:GetColor("success") or StyleManager:GetColor("error"),
+			backgroundTransparency = 0.8,
+			cornerRadius = 4,
+			padding = { left = 10, right = 10, top = 5, bottom = 5 },
+		})
+		resultItem.Position = UDim2.fromOffset(5, (i - 1) * 45)
+		resultItem.Parent = scrollContainer
+
+		-- Test Name and Status
+		local statusText = UI.Text:Create({
+			text = (result.success and "✅ " or "❌ ") .. result.testName,
+			textSize = 14,
+			size = UDim2.fromScale(0.6, 1),
+		})
+		statusText.Parent = resultItem
+
+		-- Response Time or Result
+		local resultText = UI.Text:Create({
+			text = result.responseTime and string.format("%dms", result.responseTime) or (result.result or ""),
+			textSize = 12,
+			textColor = StyleManager:GetColor("textSecondary"),
+			size = UDim2.fromScale(0.4, 1),
+			position = UDim2.fromScale(0.6, 0),
+			alignX = Enum.TextXAlignment.Right,
+		})
+		resultText.Parent = resultItem
+
+		-- Update scroll container size
+		scrollContainer.CanvasSize = UDim2.fromOffset(0, i * 45)
+	end
+end
+
+return TestDashboard
+
+
+================================
+FILE: ./src/server/init.server.lua
+================================
+-- OVHL SERVER BOOTSTRAP v5 - FIXED STRUCTURE
+print("🚀 [OVHL] Server bootstrap starting...")
+
+local success, err = pcall(function()
+    -- WAIT FOR SERVICES FOLDER
+    local servicesFolder = script:WaitForChild("services")
+    
+    -- Initialize ServiceManager first
+    local ServiceManager = require(servicesFolder.ServiceManager)
+    local serviceManager = setmetatable({}, ServiceManager)
+    
+    if not serviceManager:Init() then
+        error("❌ ServiceManager failed to initialize!")
+    end
+    
+    -- Register all services
+    print("🔧 Registering services...")
+    
+    serviceManager:RegisterService("Logger", require(servicesFolder.Logger))
+    serviceManager:RegisterService("EventBus", require(servicesFolder.EventBus))
+    serviceManager:RegisterService("ConfigService", require(servicesFolder.ConfigService))
+    serviceManager:RegisterService("DataService", require(servicesFolder.DataService))
+    serviceManager:RegisterService("RemoteManager", require(servicesFolder.RemoteManager))
+    serviceManager:RegisterService("ModuleLoader", require(servicesFolder.ModuleLoader))
+    
+    -- Register data stores
+    local DataService = serviceManager:GetService("DataService")
+    DataService:RegisterDataStore("MainData", {
+        coins = 1000,
+        gems = 100,
+        level = 1,
+        experience = 0,
+        health = 100,
+        maxHealth = 100,
+        inventory = {},
+        lastLogin = os.time(),
+        playtime = 0
+    })
+    
+    -- Start all services
+    print("🚀 Starting services...")
+    local servicesStarted = serviceManager:Start()
+    
+    if not servicesStarted then
+        warn("⚠️ Some services failed to start, but continuing...")
+    end
+    
+    -- Load modules
+    print("📦 Loading modules...")
+    local ModuleLoader = serviceManager:GetService("ModuleLoader")
+    local modulesStarted = ModuleLoader:Start()
+    
+    if not modulesStarted then
+        warn("⚠️ Some modules failed to start, but continuing...")
+    end
+    
+    print("✅ [OVHL] Server bootstrap completed successfully!")
+    print("📊 Services: " .. serviceManager:GetServiceCount())
+    
+    return serviceManager
+end)
+
+if not success then
+    warn("❌ [OVHL] Server bootstrap failed:", err)
+end
+
+
+================================
+FILE: ./src/server/services/ConfigService.lua
+================================
+-- ConfigService v5 - Simple Config
+local ConfigService = {}
+ConfigService.__index = ConfigService
+
+function ConfigService:Init()
+    self.configs = {}
+    print("🔧 ConfigService initialized")
+    return true
+end
+
+function ConfigService:Start()
+    print("⚙️ ConfigService started")
+    return true
+end
+
+function ConfigService:Set(configPath, value)
+    self.configs[configPath] = value
+    return true
+end
+
+function ConfigService:Get(configPath, defaultValue)
+    return self.configs[configPath] or defaultValue
+end
+
+return ConfigService
+
+
+================================
+FILE: ./src/server/services/DataService.lua
+================================
+-- DataService v5 - Simple Data
+local DataService = {}
+DataService.__index = DataService
+
+function DataService:Init()
+    self.dataStores = {}
+    print("🔧 DataService initialized")
+    return true
+end
+
+function DataService:Start()
+    print("💾 DataService started")
+    return true
+end
+
+function DataService:RegisterDataStore(storeName, defaultData)
+    self.dataStores[storeName] = {
+        default = defaultData or {}
+    }
+    return true
+end
+
+function DataService:GetPlayerData(player, storeName)
+    local storeConfig = self.dataStores[storeName]
+    if not storeConfig then
+        return false, "DataStore not registered: " .. storeName
+    end
+    
+    local mockData = {
+        coins = 1000,
+        gems = 100,
+        level = 1,
+        experience = 0,
+        health = 100,
+        maxHealth = 100,
+        inventory = {"Starter Sword", "Health Potion"},
+        lastLogin = os.time(),
+        playtime = 0
+    }
+    
+    return true, mockData
+end
+
+function DataService:SetPlayerData(player, storeName, data)
+    print("💾 Saved data for:", player.Name, storeName)
+    return true
+end
+
+return DataService
+
+
+================================
+FILE: ./src/server/services/EventBus.lua
+================================
+-- EventBus v5 - Simple Event System
+local EventBus = {}
+EventBus.__index = EventBus
+
+function EventBus:Init()
+    self.listeners = {}
+    print("🔧 EventBus initialized")
+    return true
+end
+
+function EventBus:Start()
+    print("📡 EventBus started")
+    return true
+end
+
+function EventBus:Subscribe(eventName, callback)
+    if not self.listeners[eventName] then
+        self.listeners[eventName] = {}
+    end
+    
+    table.insert(self.listeners[eventName], callback)
+    
+    return function()
+        self:Unsubscribe(eventName, callback)
+    end
+end
+
+function EventBus:Emit(eventName, ...)
+    local args = {...}
+    if self.listeners[eventName] then
+        for _, callback in ipairs(self.listeners[eventName]) do
+            local success, err = pcall(function()
+                callback(unpack(args))
+            end)
+            if not success then
+                warn("❌ Event callback failed:", eventName, err)
+            end
+        end
+    end
+    return true
+end
+
+function EventBus:Unsubscribe(eventName, callback)
+    if self.listeners[eventName] then
+        for i, cb in ipairs(self.listeners[eventName]) do
+            if cb == callback then
+                table.remove(self.listeners[eventName], i)
+                break
+            end
+        end
+    end
+end
+
+return EventBus
+
+
+================================
+FILE: ./src/server/services/Logger.lua
+================================
+-- Logger v5 - Simple & Effective
+local Logger = {}
+Logger.__index = Logger
+
+function Logger:Init()
+    print("🔧 Logger initialized")
+    return true
+end
+
+function Logger:Start()
+    print("📝 Logger started")
+    return true
+end
+
+function Logger:Log(level, message, data)
+    local logEntry = string.format("[%s] %s: %s", level, os.date("%H:%M:%S"), message)
+    print(logEntry)
+    return true
+end
+
+function Logger:Info(message, data)
+    return self:Log("INFO", message, data)
+end
+
+function Logger:Warn(message, data)
+    return self:Log("WARN", message, data)
+end
+
+function Logger:Error(message, data)
+    return self:Log("ERROR", message, data)
+end
+
+return Logger
+
+
+================================
+FILE: ./src/server/services/ModuleLoader.lua
+================================
+-- ModuleLoader v5 - Simple Loading
+local ModuleLoader = {}
+ModuleLoader.__index = ModuleLoader
+
+function ModuleLoader:Init()
+    self.modules = {}
+    print("🔧 ModuleLoader initialized")
+    return true
+end
+
+function ModuleLoader:Start()
+    print("📦 Loading modules...")
+    
+    local modulesFolder = script.Parent.Parent:FindFirstChild("modules")
+    if not modulesFolder then
+        print("ℹ️ No modules folder found")
+        return true
+    end
+    
+    for _, moduleScript in ipairs(modulesFolder:GetChildren()) do
+        if moduleScript:IsA("ModuleScript") then
+            local success, module = pcall(require, moduleScript)
+            if success and module then
+                self.modules[moduleScript.Name] = module
+                print("✅ Module loaded:", moduleScript.Name)
+                
+                if module.Start then
+                    local startSuccess = pcall(module.Start, module)
+                    if startSuccess then
+                        print("✅ Module started:", moduleScript.Name)
+                    end
+                end
+            else
+                warn("❌ Failed to load module:", moduleScript.Name, module)
+            end
+        end
+    end
+    
+    print("🎉 ModuleLoader completed")
+    return true
+end
+
+return ModuleLoader
+
+
+================================
+FILE: ./src/server/services/RemoteManager.lua
+================================
+-- RemoteManager v5 - Simple Communication
+local RemoteManager = {}
+RemoteManager.__index = RemoteManager
+
+function RemoteManager:Init()
+    self.handlers = {}
+    print("🔧 RemoteManager initialized")
+    return true
+end
+
+function RemoteManager:Start()
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    
+    -- Create remote objects
+    self.remoteFolder = Instance.new("Folder")
+    self.remoteFolder.Name = "OVHL_Remotes"
+    self.remoteFolder.Parent = ReplicatedStorage
+    
+    self.mainEvent = Instance.new("RemoteEvent")
+    self.mainEvent.Name = "MainRemoteEvent"
+    self.mainEvent.Parent = self.remoteFolder
+    
+    self.mainFunction = Instance.new("RemoteFunction")
+    self.mainFunction.Name = "MainRemoteFunction"
+    self.mainFunction.Parent = self.remoteFolder
+    
+    -- Set up listeners
+    self.mainEvent.OnServerEvent:Connect(function(player, eventName, ...)
+        local args = {...}
+        self:_handleEvent(player, eventName, unpack(args))
+    end)
+    
+    self.mainFunction.OnServerInvoke = function(player, eventName, ...)
+        local args = {...}
+        return self:_handleInvoke(player, eventName, unpack(args))
+    end
+    
+    print("📡 RemoteManager started")
+    return true
+end
+
+function RemoteManager:RegisterHandler(eventName, handler)
+    self.handlers[eventName] = handler
+    return true
+end
+
+function RemoteManager:_handleEvent(player, eventName, ...)
+    local handler = self.handlers[eventName]
+    if handler then
+        local success, err = pcall(handler, player, ...)
+        if not success then
+            warn("❌ Event handler failed:", eventName, err)
+        end
+    end
+end
+
+function RemoteManager:_handleInvoke(player, eventName, ...)
+    local handler = self.handlers[eventName]
+    if handler then
+        local success, result = pcall(handler, player, ...)
+        if success then
+            return result
+        else
+            return false, result
+        end
+    end
+    return false, "No handler for: " .. eventName
+end
+
+function RemoteManager:FireClient(player, eventName, ...)
+    self.mainEvent:FireClient(player, eventName, ...)
+    return true
+end
+
+return RemoteManager
+
+
+================================
+FILE: ./src/server/services/ServiceManager.lua
+================================
+-- ServiceManager v5 - Simple & Robust
+local ServiceManager = {}
+ServiceManager.__index = ServiceManager
+
+function ServiceManager:Init()
+    self.services = {}
+    self.serviceStates = {}
+    print("🔧 ServiceManager initialized")
+    return true
+end
+
+function ServiceManager:Start()
+    print("🚀 Starting all services...")
+    
+    for serviceName, service in pairs(self.services) do
+        if service.Start then
+            local success, err = pcall(service.Start, service)
+            if success then
+                self.serviceStates[serviceName] = "STARTED"
+                print("✅ Service started:", serviceName)
+            else
+                self.serviceStates[serviceName] = "FAILED"
+                warn("❌ Failed to start " .. serviceName .. ":", err)
+            end
+        else
+            self.serviceStates[serviceName] = "READY"
+            print("✅ Service ready:", serviceName)
+        end
+    end
+    
+    print("🎉 All services started!")
+    return true
+end
+
+function ServiceManager:RegisterService(serviceName, serviceModule)
+    self.services[serviceName] = serviceModule
+    self.serviceStates[serviceName] = "REGISTERED"
+    
+    if serviceModule.Init then
+        local success, err = pcall(serviceModule.Init, serviceModule)
+        if success then
+            print("🔧 Service initialized:", serviceName)
+        else
+            warn("❌ Failed to init " .. serviceName .. ":", err)
+        end
+    end
+    
+    print("📝 Registered service:", serviceName)
+    return true
+end
+
+function ServiceManager:GetService(serviceName)
+    local service = self.services[serviceName]
+    if not service then
+        error("Service not found: " .. serviceName)
+    end
+    return service
+end
+
+function ServiceManager:GetServiceCount()
+    local count = 0
+    for _ in pairs(self.services) do count = count + 1 end
+    return count
+end
+
+return ServiceManager
+
+

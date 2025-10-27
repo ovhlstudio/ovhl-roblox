@@ -5,6 +5,18 @@ local StyleManager = require(script.Parent.Parent.controllers.StyleManager)
 local TestDashboard = setmetatable({}, BaseComponent)
 TestDashboard.__index = TestDashboard
 
+-- 🔥 MANIFEST FOR AUTO-DISCOVERY
+TestDashboard.__manifest = {
+	name = "TestDashboard",
+	version = "5.0.0",
+	type = "module",
+	domain = "ui",
+	dependencies = {},
+	autoload = true,
+	priority = 40,
+	description = "System testing and monitoring dashboard",
+}
+
 function TestDashboard:Init()
 	BaseComponent.Init(self)
 

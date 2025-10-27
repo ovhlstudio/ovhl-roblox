@@ -1,0 +1,11 @@
+-- ADD TO ConfigService.lua (after the module table definition)
+ConfigService.__manifest = {
+    name = "ConfigService",
+    version = "5.0.0",
+    type = "service",
+    domain = "core",
+    dependencies = {},
+    autoload = true,
+    priority = 90,
+    description = "Configuration management service"
+}

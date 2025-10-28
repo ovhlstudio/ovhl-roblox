@@ -3,6 +3,7 @@
 *.rbxlx.lock
 build/
 archive/
+manifest_templates/
 
 # Node.js
 node_modules/

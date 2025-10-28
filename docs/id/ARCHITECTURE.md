@@ -23,14 +23,14 @@ License: MIT
 ## 🏠 REPOSITORY INFORMATION
 
 - **GitHub:** https://github.com/ovhlstudio/ovhl-roblox
-- **Core Package:** `/packages/core/`
-- **Location:** `packages/core/src/`
+- **Core Package:** `/./`
+- **Location:** `./src/`
 
 ## 📐 DIAGRAM ARSITEKTUR
 
 ```mermaid
 graph TB
-    subgraph "📦 PACKAGES/CORE/SRC"
+    subgraph "📦 ./SRC"
         subgraph "🖥️ SERVER LAYER"
             SM[ServiceManager<br/>Orchestrator]
             LG[Logger<br/>Logging System]
@@ -79,7 +79,7 @@ graph TB
 ## 🗂️ FILE STRUCTURE ACTUAL
 
 ```
-packages/core/src/
+./src/
 ├── 🖥️ server/
 │   ├── services/
 │   │   ├── ServiceManager.lua
@@ -117,7 +117,7 @@ packages/core/src/
 
 ### ServiceManager
 
-**Location:** `packages/core/src/server/services/ServiceManager.lua`
+**Location:** `./src/server/services/ServiceManager.lua`
 **Tujuan:** Orchestrasi service dan manajemen lifecycle
 **Method:**
 
@@ -128,7 +128,7 @@ packages/core/src/
 
 ### DataService
 
-**Location:** `packages/core/src/server/services/DataService.lua`
+**Location:** `./src/server/services/DataService.lua`
 **Tujuan:** Persistensi data dan manajemen
 **Method:**
 
@@ -138,7 +138,7 @@ packages/core/src/
 
 ### RemoteManager
 
-**Location:** `packages/core/src/server/services/RemoteManager.lua`
+**Location:** `./src/server/services/RemoteManager.lua`
 **Tujuan:** Komunikasi client-server
 **Method:**
 

@@ -1,0 +1,11 @@
+-- ADD TO EventBus.lua (after the module table definition)
+EventBus.__manifest = {
+    name = "EventBus",
+    version = "5.0.0",
+    type = "service",
+    domain = "core",
+    dependencies = {"Logger"},
+    autoload = true,
+    priority = 95,
+    description = "Event-driven communication system"
+}

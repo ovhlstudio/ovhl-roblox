@@ -22,7 +22,7 @@ License: MIT
 ## 🏠 REPOSITORY INFORMATION
 
 - **GitHub:** https://github.com/ovhlstudio/ovhl-roblox
-- **Core Package:** `/packages/core/`
+- **Core Package:** `/./`
 - **Context File:** `docs/ai_context/OVHL_AI_CONTEXT.md`
 
 ## 🎯 EFFECTIVE PROMPT STRUCTURE
@@ -32,7 +32,7 @@ License: MIT
 ```markdown
 CONTEXT: OVHL Core Project - [Feature Name]
 REPOSITORY: https://github.com/ovhlstudio/ovhl-roblox
-LOCATION: packages/core/src/
+LOCATION: ./src/
 
 OBJECTIVE: [Clear description of what to build]
 
@@ -60,7 +60,7 @@ SPECIFIC REQUIREMENTS:
 OUTPUT FORMAT:
 
 - Complete Luau code following OVHL patterns
-- File paths relative to packages/core/src/
+- File paths relative to ./src/
 - Documentation comments for all public methods
 - Usage examples with error handling
 - Integration examples with existing services
@@ -147,7 +147,7 @@ SERVICE SPECIFICATION:
 
 - SERVICE NAME: [Name in PascalCase]
 - PURPOSE: [Clear one-sentence purpose]
-- LOCATION: packages/core/src/server/services/[Name].lua
+- LOCATION: ./src/server/services/[Name].lua
 
 DEPENDENCIES:
 
@@ -186,7 +186,7 @@ COMPONENT SPECIFICATION:
 
 - COMPONENT NAME: [Name in PascalCase]
 - PURPOSE: [UI element purpose]
-- LOCATION: packages/core/src/client/modules/[Name].lua
+- LOCATION: ./src/client/modules/[Name].lua
 
 PROPS INTERFACE:
 
@@ -269,7 +269,7 @@ SPECIFIC ASPECT: [e.g., service communication, UI rendering, data flow]
 REQUEST:
 
 - Describe the pattern and its benefits in OVHL context
-- Provide concrete code examples from packages/core/src/
+- Provide concrete code examples from ./src/
 - Explain common implementation pitfalls and solutions
 - Suggest best practices for the pattern
 - Compare with alternative approaches considered
@@ -342,7 +342,7 @@ OBJECTIVE: Create AuthenticationService for player login/logout
 
 ARCHITECTURE:
 
-- Location: packages/core/src/server/services/AuthenticationService.lua
+- Location: ./src/server/services/AuthenticationService.lua
 - Extend existing ServiceManager/EventBus patterns
 - Integrate with DataService for player data
 - Use EventBus for login/logout events
@@ -376,7 +376,7 @@ OUTPUT: Complete service with usage examples and error handling
 
 ```markdown
 Service: [Name]
-Location: packages/core/src/server/services/[Name].lua
+Location: ./src/server/services/[Name].lua
 Dependencies: [Service1, Service2]
 Events: Emit [Event1], Listen [Event2]
 Methods: [Method1], [Method2]
@@ -386,7 +386,7 @@ Methods: [Method1], [Method2]
 
 ```markdown
 Component: [Name]  
-Location: packages/core/src/client/modules/[Name].lua
+Location: ./src/client/modules/[Name].lua
 Extends: BaseComponent
 Props: [prop1], [prop2]
 State: [state1], [state2]
@@ -413,7 +413,7 @@ PROBLEM: [Describe the issue with AI response]
 CONTEXT REINFORCEMENT:
 
 - Reference docs/ai_context/OVHL_AI_CONTEXT.md
-- Specify exact file paths in packages/core/src/
+- Specify exact file paths in ./src/
 - Remind about OVHL architecture patterns
 - Request error handling implementation
 

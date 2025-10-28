@@ -1,0 +1,11 @@
+-- ADD TO DataService.lua (after the module table definition)
+DataService.__manifest = {
+    name = "DataService",
+    version = "5.0.0",
+    type = "service",
+    domain = "data",
+    dependencies = {"Logger"},
+    autoload = true,
+    priority = 80,
+    description = "Data persistence and management service"
+}

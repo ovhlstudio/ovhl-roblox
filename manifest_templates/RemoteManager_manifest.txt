@@ -1,0 +1,11 @@
+-- ADD TO RemoteManager.lua (after the module table definition)
+RemoteManager.__manifest = {
+    name = "RemoteManager",
+    version = "5.0.0",
+    type = "service",
+    domain = "network",
+    dependencies = {"Logger", "EventBus"},
+    autoload = true,
+    priority = 75,
+    description = "Client-server communication manager"
+}

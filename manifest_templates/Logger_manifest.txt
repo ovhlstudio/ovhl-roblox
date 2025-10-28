@@ -1,0 +1,11 @@
+-- ADD TO Logger.lua (after the module table definition)
+Logger.__manifest = {
+    name = "Logger",
+    version = "5.0.0",
+    type = "service",
+    domain = "core",
+    dependencies = {},
+    autoload = true,
+    priority = 100,
+    description = "Core logging service for structured logging"
+}

@@ -23,7 +23,7 @@ License: MIT
 ## 🏠 REPOSITORY INFORMATION
 
 - **GitHub:** https://github.com/ovhlstudio/ovhl-roblox
-- **Main Package:** `/packages/core/`
+- **Main Package:** `/./`
 - **Tools Package:** `/packages/tools/` (Coming Soon)
 
 ## 🗺️ DIAGRAM SETUP PROCESS
@@ -46,7 +46,7 @@ flowchart TD
     end
 
     subgraph C[Navigate to Core]
-        C1[cd packages/core]
+        C1[cd .]
     end
 ```
 
@@ -78,7 +78,7 @@ cd ovhl-roblox
 
 ```bash
 # Navigate to the core framework package
-cd packages/core
+cd .
 ```
 
 ### Step 3: Install Dependencies
@@ -107,7 +107,7 @@ sequenceDiagram
     participant Studio as Roblox Studio
     participant Game as Test Game
 
-    Dev->>Rojo: rojo serve (from packages/core)
+    Dev->>Rojo: rojo serve (from .)
     Rojo->>Studio: Sync Core Files
     Dev->>Studio: Open Project
     Studio->>Game: Play Test
@@ -155,7 +155,7 @@ graph TD
 
 ```bash
 # Terminal 1: Navigate to core package dan serve
-cd packages/core
+cd .
 rojo serve default.project.json
 
 # Terminal 2: Build untuk production
@@ -203,7 +203,7 @@ local testChecklist = {
 graph LR
     A[Problem] --> B[Solution]
 
-    A1[Path errors] --> B1[Pastikan di folder packages/core]
+    A1[Path errors] --> B1[Pastikan di folder .]
     A2[services not found] --> B2[Check Rojo config paths]
     A3[Remote timeout] --> B3[Verify RemoteManager initialization]
     A4[UI not rendering] --> B4[Check UIController startup]
@@ -214,7 +214,7 @@ graph LR
 ```lua
 -- Enable debug logging di console
 Logger:Info("Setup verification", {
-    location = "packages/core",
+    location = ".",
     services = ServiceManager:GetServiceCount(),
     connected = RemoteClient:IsConnected()
 })
@@ -234,7 +234,7 @@ ovhl dev  # Auto setup development environment
 ## 🎯 VERIFICATION CHECKLIST
 
 - [ ] **Repository cloned** - dari https://github.com/ovhlstudio/ovhl-roblox
-- [ ] **Correct location** - working di `packages/core/` folder
+- [ ] **Correct location** - working di `./` folder
 - [ ] **Rojo installation** - `rojo --version` returns version
 - [ ] **Server bootstrap** - no errors in console (6 services loaded)
 - [ ] **Client connection** - RemoteClient connects successfully

@@ -1,0 +1,11 @@
+-- ADD TO ModuleLoader.lua (after the module table definition)
+ModuleLoader.__manifest = {
+    name = "ModuleLoader",
+    version = "6.0.0",
+    type = "service",
+    domain = "core",
+    dependencies = {},
+    autoload = true,
+    priority = 50,
+    description = "Dynamic module loading with auto-discovery"
+}

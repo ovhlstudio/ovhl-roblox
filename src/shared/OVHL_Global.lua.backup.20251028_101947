@@ -1,0 +1,174 @@
+-- OVHL Global Accessor v1.0.0
+-- Single entry point for all core systems
+local OVHL = {}
+OVHL.__index = OVHL
+
+-- Environment detection
+local RunService = game:GetService("RunService")
+local IS_SERVER = RunService:IsServer()
+local IS_CLIENT = RunService:IsClient()
+
+-- Cache for performance
+local cachedServices = {}
+local cachedModules = {}
+
+function OVHL:GetService(serviceName)
+    if cachedServices[serviceName] then
+        return cachedServices[serviceName]
+
+        -- Server-side: Use ServiceManager
+        local success, serviceManager = pcall(function()
+            return require(game.ServerScriptService.OVHL_Server.services.ServiceManager)
+        
+        if success and serviceManager then
+            local smInstance = getmetatable(serviceManager).__index
+            local service = smInstance:GetService(serviceName)
+            if service then
+                cachedServices[serviceName] = service
+                return service
+        -- Client-side: Use ClientController
+        local success, clientController = pcall(function()
+            return require(game:GetService("Players").LocalPlayer.PlayerScripts.OVHL_Client.controllers.ClientController)
+        
+        if success and clientController then
+            local controller = clientController:GetController(serviceName)
+            if controller then
+                cachedServices[serviceName] = controller
+                return controller
+
+    warn("❌ OVHL: Service/Controller not found:", serviceName)
+    return nil
+
+function OVHL:GetModule(moduleName)
+    if cachedModules[moduleName] then
+        return cachedModules[moduleName]
+
+        -- Server-side: Use ModuleLoader
+        local moduleLoader = self:GetService("ModuleLoader")
+        if moduleLoader then
+            local module = moduleLoader:GetModule(moduleName)
+            if module then
+                cachedModules[moduleName] = module
+                return module
+        -- Client-side: Use ClientController
+        local success, clientController = pcall(function()
+            return require(game:GetService("Players").LocalPlayer.PlayerScripts.OVHL_Client.controllers.ClientController)
+        
+        if success and clientController then
+            local module = clientController:GetModule(moduleName)
+            if module then
+                cachedModules[moduleName] = module
+                return module
+
+    warn("❌ OVHL: Module not found:", moduleName)
+    return nil
+
+function OVHL:GetConfig(moduleName)
+    if not IS_SERVER then
+        warn("❌ OVHL: GetConfig is server-only")
+        return nil
+
+    local configService = self:GetService("ConfigService")
+    if configService then
+        return configService:Get(moduleName)
+    
+    return nil
+
+-- ==================== SERVER-SIDE APIs ====================
+
+function OVHL:Emit(eventName, ...)
+    if not IS_SERVER then
+        warn("❌ OVHL: Emit is server-only")
+        return false
+
+    local eventBus = self:GetService("EventBus")
+    if eventBus then
+        return eventBus:Emit(eventName, ...)
+    
+    return false
+
+function OVHL:Subscribe(eventName, callback)
+    if not IS_SERVER then
+        warn("❌ OVHL: Subscribe (EventBus) is server-only")
+
+    local eventBus = self:GetService("EventBus")
+    if eventBus then
+        return eventBus:Subscribe(eventName, callback)
+    
+
+-- ==================== CLIENT-SIDE APIs ====================
+
+function OVHL:SetState(key, value)
+    if not IS_CLIENT then
+        warn("❌ OVHL: SetState is client-only")
+        return false
+
+    local stateManager = self:GetService("StateManager")
+    if stateManager then
+        return stateManager:Set(key, value)
+    
+    return false
+
+function OVHL:GetState(key, defaultValue)
+    if not IS_CLIENT then
+        warn("❌ OVHL: GetState is client-only")
+        return defaultValue
+
+    local stateManager = self:GetService("StateManager")
+    if stateManager then
+        return stateManager:Get(key, defaultValue)
+    
+    return defaultValue
+
+function OVHL:Fire(eventName, ...)
+    if not IS_CLIENT then
+        warn("❌ OVHL: Fire is client-only")
+        return false
+
+    local remoteClient = self:GetService("RemoteClient")
+    if remoteClient then
+        return remoteClient:Fire(eventName, ...)
+    
+    return false
+
+function OVHL:Invoke(eventName, ...)
+    if not IS_CLIENT then
+        warn("❌ OVHL: Invoke is client-only")
+        return false
+
+    local remoteClient = self:GetService("RemoteClient")
+    if remoteClient then
+        return remoteClient:Invoke(eventName, ...)
+    
+    return false
+
+function OVHL:Listen(eventName, callback)
+    if not IS_CLIENT then
+        warn("❌ OVHL: Listen is client-only")
+
+    local remoteClient = self:GetService("RemoteClient")
+    if remoteClient then
+        return remoteClient:Listen(eventName, callback)
+    
+
+-- ==================== INITIALIZATION ====================
+
+-- Create global instance
+local ovhlInstance = setmetatable({}, OVHL)
+
+-- Safe initialization that won't break modules
+local function safeInit()
+    if IS_SERVER then
+        print("🚀 OVHL Global Accessor initialized (Server)")
+    else
+        print("🎮 OVHL Global Accessor initialized (Client)")
+    end
+end
+
+-- Run safe initialization
+pcall(safeInit)
+
+return ovhlInstance
+
+-- Auto-initialize logging for debugging
+

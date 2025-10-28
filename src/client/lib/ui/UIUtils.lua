@@ -1,4 +1,4 @@
-local StyleManager = require(script.Parent.Parent.controllers.StyleManager)
+local StyleManager = require(script.Parent.Parent.Parent.controllers.StyleManager)
 
 local UIUtils = {}
 

@@ -1,6 +1,18 @@
--- RemoteManager v5 - Simple Communication
+-- RemoteManager v1 - Simple Communication
 local RemoteManager = {}
 RemoteManager.__index = RemoteManager
+
+-- 🔥 MANIFEST FOR AUTO-DISCOVERY
+RemoteManager.__manifest = {
+    name = "RemoteManager",
+    version = "1.0.0",
+    type = "service",
+    domain = "network",
+    dependencies = {"Logger", "EventBus"},
+    autoload = true,
+    priority = 75,
+    description = "Client-server communication manager"
+}
 
 function RemoteManager:Init()
     self.handlers = {}

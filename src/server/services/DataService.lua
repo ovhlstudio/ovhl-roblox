@@ -1,6 +1,18 @@
--- DataService v5 - Simple Data
+-- DataService v1 - Simple Data
 local DataService = {}
 DataService.__index = DataService
+
+-- 🔥 MANIFEST FOR AUTO-DISCOVERY
+DataService.__manifest = {
+    name = "DataService",
+    version = "1.0.0",
+    type = "service",
+    domain = "data",
+    dependencies = {"Logger"},
+    autoload = true,
+    priority = 80,
+    description = "Data persistence and management service"
+}
 
 function DataService:Init()
     self.dataStores = {}
@@ -20,7 +32,7 @@ function DataService:RegisterDataStore(storeName, defaultData)
     return true
 end
 
-function DataService:GetPlayerData(player, storeName)
+function DataService:GetPlayerData(_player, storeName)
     local storeConfig = self.dataStores[storeName]
     if not storeConfig then
         return false, "DataStore not registered: " .. storeName
@@ -41,7 +53,7 @@ function DataService:GetPlayerData(player, storeName)
     return true, mockData
 end
 
-function DataService:SetPlayerData(player, storeName, data)
+function DataService:SetPlayerData(player, storeName, _data)
     print("💾 Saved data for:", player.Name, storeName)
     return true
 end

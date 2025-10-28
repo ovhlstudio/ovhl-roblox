@@ -3,15 +3,16 @@ local StyleManager = {}
 StyleManager.__index = StyleManager
 
 -- 🔥 MANIFEST FOR AUTO-DISCOVERY
+-- 🔥 MANIFEST FOR AUTO-DISCOVERY
 StyleManager.__manifest = {
-	name = "StyleManager",
-	version = "5.0.0",
-	type = "controller",
-	domain = "ui",
-	dependencies = {},
-	autoload = true,
-	priority = 60,
-	description = "UI theming and styling controller",
+    name = "StyleManager",
+    version = "1.0.0",
+    type = "controller",
+    domain = "ui",
+    dependencies = {},
+    autoload = true,
+    priority = 60,
+    description = "UI theming and styling controller",
 }
 
 function StyleManager:Init()

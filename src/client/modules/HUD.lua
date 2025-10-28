@@ -5,15 +5,16 @@ local HUD = setmetatable({}, BaseComponent)
 HUD.__index = HUD
 
 -- 🔥 MANIFEST FOR AUTO-DISCOVERY
+-- 🔥 MANIFEST FOR AUTO-DISCOVERY
 HUD.__manifest = {
-	name = "HUD",
-	version = "5.0.0",
-	type = "module",
-	domain = "ui",
-	dependencies = {},
-	autoload = true,
-	priority = 50,
-	description = "Heads-up display component",
+    name = "HUD",
+    version = "1.0.0",
+    type = "module",
+    domain = "ui",
+    dependencies = {},
+    autoload = true,
+    priority = 50,
+    description = "Heads-up display component",
 }
 
 function HUD:Init()

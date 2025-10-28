@@ -1,11 +1,10 @@
--- OVHL Global Accessor v2.1.0
+-- OVHL Global Accessor v1.0.2
 -- Single entry point for all core systems
 local OVHL = {}
 OVHL.__index = OVHL
 
 -- Environment detection
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local IS_SERVER = RunService:IsServer()
 local IS_CLIENT = RunService:IsClient()
 
@@ -19,7 +18,7 @@ function OVHL:GetService(serviceName)
     end
 
     if IS_SERVER then
-        -- Server-side: Use ServiceManager directly
+        -- Server-side: Use ServiceManager
         local success, serviceManager = pcall(function()
             return require(game.ServerScriptService.OVHL_Server.services.ServiceManager)
         end)
@@ -32,20 +31,16 @@ function OVHL:GetService(serviceName)
             end
         end
     else
-        -- Client-side: Try multiple paths for ClientController
-        local paths = {
-            function() return require(ReplicatedStorage.OVHL_Shared.utils.ClientController) end,
-            function() return require(script.Parent.utils.ClientController) end,
-        }
+        -- Client-side: Use ClientController
+        local success, clientController = pcall(function()
+            return require(game.ReplicatedStorage.OVHL_Shared.utils.ClientController)
+        end)
         
-        for _, pathFn in ipairs(paths) do
-            local success, clientController = pcall(pathFn)
-            if success and clientController then
-                local controller = clientController:GetController(serviceName)
-                if controller then
-                    cachedServices[serviceName] = controller
-                    return controller
-                end
+        if success and clientController then
+            local controller = clientController:GetController(serviceName)
+            if controller then
+                cachedServices[serviceName] = controller
+                return controller
             end
         end
     end
@@ -70,20 +65,16 @@ function OVHL:GetModule(moduleName)
             end
         end
     else
-        -- Client-side: Try ClientController paths
-        local paths = {
-            function() return require(ReplicatedStorage.OVHL_Shared.utils.ClientController) end,
-            function() return require(script.Parent.utils.ClientController) end,
-        }
+        -- Client-side: Use ClientController
+        local success, clientController = pcall(function()
+            return require(game.ReplicatedStorage.OVHL_Shared.utils.ClientController)
+        end)
         
-        for _, pathFn in ipairs(paths) do
-            local success, clientController = pcall(pathFn)
-            if success and clientController then
-                local module = clientController:GetModule(moduleName)
-                if module then
-                    cachedModules[moduleName] = module
-                    return module
-                end
+        if success and clientController then
+            local module = clientController:GetModule(moduleName)
+            if module then
+                cachedModules[moduleName] = module
+                return module
             end
         end
     end
@@ -209,16 +200,19 @@ end
 -- Create global instance
 local ovhlInstance = setmetatable({}, OVHL)
 
--- Safe initialization that won't break modules
+-- Safe initialization
 local function safeInit()
     if IS_SERVER then
         print("🚀 OVHL Global Accessor initialized (Server)")
+        -- Auto-expose to _G on server
+        _G.OVHL = ovhlInstance
     else
         print("🎮 OVHL Global Accessor initialized (Client)")
+        -- Auto-expose to _G on client  
+        _G.OVHL = ovhlInstance
     end
 end
 
--- Run safe initialization
 pcall(safeInit)
 
 return ovhlInstance

@@ -20,535 +20,830 @@
 
 ---
 
-# 📝 OVHL CORE - DEVELOPMENT LOGS UPDATE - 28 Oktober 2025 13:50 WIB (DEEPSEEK)
+## 📋 **DEEPSEEK - DEV LOGS UPDATE** 28 Oktober 2025 16:15 WIB (DEEPSEEK)
+
+### BRANCH AND LOCAL : duaar@DA2025 MINGW64 /e/ovhlnew (core/client-side)
+
+### DOCUMENT STRUCTURE : ./EXPORTS/current-structure-20251028_161023.md
+
+### ✅ **YANG SUDAH BERHASIL DIPERBAIKI:**
+
+1. **✅ Server-Side Auto-Discovery** - 6 services loaded sempurna
+2. **✅ Client Controllers** - 6 controllers loaded & started
+3. **✅ Enhanced StateManager** - Debug logging working
+4. **✅ Nil Call Bug Fixed** - No more crash di ClientController
+5. **✅ UIController Started** - Mount system active
+
+### ❌ **MASALAH YANG MASIH ADA:**
+
+#### **MASALAH KRITIS #1: HUD MODULE TIDAK TER-DISCOVERY**
+
+- ClientController menemukan TestDashboard & TestClientModule
+- **TAPI HUD TIDAK DITEMUKAN** - tidak ada log "DISCOVERED MODULE: HUD"
+- UIController mencoba mount tapi HUD tidak ada di OVHL modules
+
+#### **MASALAH KRITIS #2: MODULE DISCOVERY INCOMPLETE**
+
+- Hanya 2 modules yang ditemukan: TestDashboard & TestClientModule
+- HUD module tidak terdeteksi oleh ClientController
+
+#### **MASALAH #3: RETRY LOOP TANPA HASIL**
+
+- UIController terus retry mount HUD setiap 2 detik
+- Tapi HUD never found karena tidak terdaftar di OVHL
+
+---
+
+## 🔍 **ROOT CAUSE ANALYSIS:**
+
+### **1. HUD FILE EXISTENCE & MANIFEST**
+
+✅ **File exists** - HUD.lua ada di `src/client/modules/`
+✅ **Manifest correct** - Punya `__manifest` dengan name="HUD"
+✅ **Dependencies** - StateManager & RemoteClient tersedia
+
+### **2. CLIENTCONTROLLER DISCOVERY LOGIC**
+
+```lua
+-- ClientController:AutoDiscoverModules()
+-- Hanya menemukan 2 dari 3 modules:
+- TestDashboard ✅ Ditemukan
+- TestClientModule ✅ Ditemukan
+- HUD ❌ TIDAK DITEMUKAN
+```
+
+### **3. POTENSI ISSUE:**
+
+- **File naming** - Case sensitivity issues?
+- **Manifest parsing** - Error silent di require?
+- **Folder structure** - HUD di subfolder?
+- **Module loading** - Error saat require HUD?
+
+---
+
+## 🛠️ **YANG PERLU DIPERBAIKI NEXT AI:**
+
+### **PRIORITY 1: FIX HUD DISCOVERY**
+
+```bash
+# Debug steps untuk next AI:
+1. Check if HUD.lua exists in correct location
+2. Verify HUD manifest is correct and parseable
+3. Add debug logs to see why HUD not discovered
+4. Check for silent errors during HUD require
+```
+
+### **PRIORITY 2: VERIFY MODULE SCANNING**
+
+```bash
+# ClientController perlu enhanced debugging:
+1. Log semua files di modules folder
+2. Log hasil setiap require attempt
+3. Catch dan display errors selama discovery
+```
+
+### **PRIORITY 3: IMPROVE ERROR HANDLING**
+
+```bash
+# Better error reporting:
+1. Jika module tidak ditemukan, log reason
+2. Jika require gagal, tampilkan error message
+3. Jika manifest invalid, tampilkan detail
+```
+
+---
+
+## 📝 **INSTRUKSI UNTUK NEXT AI:**
+
+### **STEP 1: DIAGNOSE HUD DISCOVERY FAILURE**
+
+```lua
+-- Tambah di ClientController:AutoDiscoverModules()
+print("📁 Modules in folder:", #modulesFolder:GetChildren())
+for i, child in ipairs(modulesFolder:GetChildren()) do
+    print("  " .. i .. ". " .. child.Name .. " (" .. child.ClassName .. ")")
+end
+```
+
+### **STEP 2: DEBUG HUD REQUIRE PROCESS**
+
+```lua
+-- Di loop module discovery:
+local success, result = pcall(require, moduleScript)
+if not success then
+    print("❌ FAILED TO REQUIRE: " .. moduleScript.Name)
+    print("   ERROR: " .. tostring(result))
+end
+```
+
+### **STEP 3: VERIFY HUD MANIFEST ACCESS**
+
+```lua
+if moduleTable and moduleTable.__manifest then
+    print("✅ Module has manifest:", moduleTable.__manifest.name)
+else
+    print("❌ Module missing or no manifest:", moduleScript.Name)
+end
+```
+
+---
+
+## 🚀 **CARA PENGGUNAAN RUN.SH:**
+
+### **BASIC USAGE:**
+
+```bash
+# Jalankan fix script
+./run.sh
+
+# Atau jika permission denied:
+chmod +x run.sh
+./run.sh
+```
+
+### **WHAT RUN.SH DOES:**
+
+1. **Validates** OVHL structure
+2. **Detects** current issues
+3. **Applies** targeted fixes
+4. **Verifies** fixes applied
+5. **Generates** test commands
+
+### **RUN.SH FEATURES:**
+
+- ✅ **Zero manual intervention**
+- ✅ **Auto-backup before changes**
+- ✅ **Smart issue detection**
+- ✅ **Comprehensive verification**
+- ✅ **Color-coded output**
+
+---
+
+## 🎯 **NEXT STEPS UNTUK AI BERIKUTNYA:**
+
+### **URGENT:**
+
+1. **Cari tahu kenapa HUD tidak ter-discovery**
+2. **Fix ClientController module scanning**
+3. **Pastikan HUD terdaftar di OVHL modules**
+
+### **IMPROVEMENT:**
+
+1. **Enhanced debugging** untuk module discovery
+2. **Better error reporting** untuk require failures
+3. **Retry mechanism** dengan exponential backoff
+
+### **TESTING:**
+
+1. **Verify HUD appears** dalam 5 detik
+2. **Test button functionality**
+3. **Verify state subscriptions** working
+
+---
+
+# 📝 OVHL CORE - DEVELOPMENT LOGS UPDATE - 28 Oktober 2025 13:50 WIB (CLAUDE)
 
 ### BRANCH duaar@DA2025 MINGW64 /e/ovhlnew (core/client-side)
 
-## 🚨 **CURRENT SITUATION ANALYSIS**
+# 🚨 **CRITICAL: INSTRUCTION UNTUK NEXT AI**
 
-### **MASALAH YANG TERJADI:**
+## 📖 **WAJIB BACA DULU SEBELUM KERJA:**
 
-1. **HUD module tidak ditemukan** oleh UIController saat force mount
-2. **StateManager subscriptions tidak bekerja** - "No subscribers"
-3. **Timing issue** - UIController mencoba mount HUD sebelum HUD terdaftar di OVHL
-4. **UI tidak update** meski state berubah
-
-### **YANG SUDAH BERHASIL:**
-
-✅ **Server-Side:** 100% Stable - 6 services auto-discovery  
-✅ **Client-Side Core:** 100% Working - 6 controllers loaded  
-✅ **OVHL Global Accessor:** Working - APIs accessible via `_G.OVHL`  
-✅ **State Management:** Basic Set/Get working  
-✅ **Network:** RemoteClient Fire/Invoke/Listen working  
-✅ **Auto-Discovery:** Both server & client working perfectly
-
-### **YANG MASIH GAGAL:**
-
-❌ **HUD Mounting:** UIController gagal find HUD module  
-❌ **State Subscriptions:** Callbacks tidak triggered  
-❌ **UI Reactivity:** Changes tidak reflect di display
-
-## 🔧 **ROOT CAUSE ANALYSIS**
-
-### **MASALAH 1: TIMING ISSUE**
-
-```lua
--- UIController Start() called BEFORE modules discovery
-13:50:00.800  🎨 UIController Started - Force mounting HUD...
-13:50:00.800  ❌ HUD module not found in OVHL
-13:50:00.800  🔍 [OVHL] Auto-discovering modules...
-13:50:00.800  📦 Discovered: HUD v1.5.0
-```
-
-**UIController start duluan** sebelum modules ditemukan!
-
-### **MASALAH 2: STATE SUBSCRIPTIONS**
-
-```lua
-13:50:01.811  🎯 StateManager:Set called - Key: test_coins Value: 100
-13:50:01.811  ℹ️ No subscribers for test_coins
-```
-
-**HUD subscriptions tidak terdaftar** di StateManager!
-
-## 🎯 **YANG BISA DILAKUKAN SEKARANG:**
-
-### **QUICK WINS:**
-
-1. **Fix UIController timing** - Delay HUD mount sampai modules loaded
-2. **Manual UI updates** sebagai fallback
-3. **Verify OVHL module registration**
-
-### **LIMITATIONS:**
-
-- State subscriptions mungkin perlu architectural redesign
-- UI reactivity system belum mature
-- Component lifecycle perlu improvement
-
-## 📋 **PROBLEM SOLVED SELAMA SESI:**
-
-### **BESAR:**
-
-1. ✅ **Syntax Errors Fixed** - OVHL_Global, RemoteClient
-2. ✅ **Client-Side APIs Implemented** - SetState, GetState, Fire, Invoke, Listen
-3. ✅ **Auto-Discovery Working** - Both server & client
-4. ✅ **UI System Foundation** - UIController, UIEngine, HUD component
-5. ✅ **Error Handling** - No crashes, graceful degradation
-
-### **TECHNICAL:**
-
-- ✅ Rojo sync issues resolved
-- ✅ Selene config untuk \_G.OVHL
-- ✅ Module manifest system working
-- ✅ Service/Controller dependency injection
-
-## 📚 **DOKUMEN YANG PERLU UPDATE:**
-
-### **PRIORITAS 1:**
-
-1. **`DEV_LOGS.md`** - Update progress & known issues
-2. **`OVHL_AI_CONTEXT.md`** - Add troubleshooting section
-3. **`2.2_RESEP_KODING.md`** - Add UI component examples
-
-### **PRIORITAS 2:**
-
-4. **`1.4_REFERENSI_API.md`** - Document Client APIs usage
-5. **`2.1_MODULE_STANDART.md`** - Add UI component standards
-
-## 🚀 **NEXT AI INSTRUCTION & ACTION PLAN**
-
-### **PHASE 1: CRITICAL FIXES** (NEXT SESSION)
-
-```bash
-# FIX 1: UIController Timing
-# - Delay HUD mount until modules are discovered
-# - Add module readiness check
-
-# FIX 2: State Subscriptions
-# - Debug why HUD subscriptions not registering
-# - Add subscription verification
-
-# FIX 3: Manual UI Updates
-# - Implement reliable UI refresh mechanism
-```
-
-### **PHASE 2: ARCHITECTURE IMPROVEMENT**
-
-```bash
-# 1. State Management Redesign
-# - Proper subscription system
-# - Reactive UI updates
-
-# 2. UI Component Lifecycle
-# - Better mount/unmount handling
-# - Event connection management
-
-# 3. Module Communication
-# - Service discovery verification
-# - Dependency resolution
-```
-
-### **PHASE 3: DOCUMENTATION & EXAMPLES**
-
-```bash
-# 1. Update Cookbook with working examples
-# 2. Create troubleshooting guide
-# 3. Add UI development patterns
-```
-
-## 🛠️ **RUN.SH MASTER GUIDE**
-
-### **PATTERN PENGGUNAAN:**
-
-```bash
-# 1. SELALU backup & validation
-./run.sh  # Script otomatis handle backup + validation
-
-# 2. Structure script:
-#!/bin/bash
-# ============================================
-# TASK DESCRIPTION
-# ============================================
-
-# Pre-flight checks
-# File modifications with validation
-# Verification & summary
-```
-
-### **BEST PRACTICES:**
-
-1. **Always validate Lua syntax**
-2. **Create backups before modifications**
-3. **Include comprehensive logging**
-4. **Provide rollback capability**
-5. **Generate summary report**
-
-### **COMMAND TEMPLATE:**
-
-```bash
-#!/bin/bash
-# Fix for [SPECIFIC ISSUE]
-
-set -e
-# [Color definitions]
-# [Backup creation]
-# [File modifications with validation]
-# [Verification & summary]
-```
-
-## 🎯 **IMMEDIATE NEXT ACTION FOR NEXT AI:**
-
-**BACA INI SEBELUM KERJA:**
-
-1. **Review log terakhir** - Pahami timing issues
-2. **Test StateManager subscriptions** - Debug why not working
-3. **Fix UIController mount timing** - Wait for module discovery
-4. **Implement manual UI update fallback** - Bypass subscriptions
-
-**MANDATORY CHECK:**
-
-- ✅ OVHL Global Accessor working
-- ✅ ClientController modules discovery
-- ✅ StateManager basic Set/Get
-- ✅ HUD component rendering
-
-**CRITICAL: JANGAN bypass OVHL pattern!** Selalu pakai `OVHL:GetService()` dan `OVHL:GetModule()`
+1. ✅ **Blueprint:** `1.3_ARSITEKTUR_INTI.md` v1.1.3
+2. ✅ **API Reference:** `1.4_REFERENSI_API.md` v1.1.0
+3. ✅ **Standards:** `2.1_MODULE_STANDART.md` v1.1.2
+4. ✅ **Current Structure:** `current-structure-20251028_135848.md`
+5. ✅ **This Log:** Sampai akhir!
 
 ---
 
-**LOG END - ANALYSIS COMPLETE**
-**NEXT SESSION: FIX UI REACTIVITY & STATE SUBSCRIPTIONS** 🚀
+## 🎯 **CURRENT SITUATION SUMMARY**
+
+### ✅ **YANG SUDAH WORKING:**
+
+- Server-side: 100% stable (6 services auto-discovery)
+- Client-side core: 100% working (6 controllers loaded)
+- OVHL Global Accessor: APIs accessible
+- State Management: Basic Set/Get working
+- Network: RemoteClient Fire/Invoke/Listen working
+- Auto-Discovery: Both server & client perfect
+
+### ❌ **YANG MASIH BROKEN (3 CRITICAL ISSUES):**
+
+#### **ISSUE #1: MODULE DISCOVERY vs UI MOUNTING TIMING**
+
+```
+Current Flow (SALAH):
+1. ClientController:Init() ✅
+2. ClientController:AutoDiscoverControllers()
+   → UIController:Init() ✅
+   → UIController:Start() → Try mount HUD ❌ (Too early!)
+3. ClientController:AutoDiscoverModules()
+   → HUD discovered ✅ (Too late!)
+
+Root Cause: UIController START sebelum modules discovered
+```
+
+#### **ISSUE #2: STATE SUBSCRIPTIONS NOT TRIGGERING**
+
+```lua
+-- HUD DidMount()
+OVHL:Subscribe("coins", callback) -- ✅ Register OK
+
+-- StateManager:Set()
+self._subscribers["coins"] -- ❌ EMPTY! "No subscribers"
+
+Root Cause: Subscription registered tapi callbacks tidak triggered
+Possible: Instance mismatch atau timing issue
+```
+
+#### **ISSUE #3: UI NOT REACTIVE**
+
+```lua
+OVHL:SetState("coins", 100) -- ✅ State updated
+-- UI tetap stuck di old value ❌
+
+Root Cause: State change tidak trigger UI update
+```
 
 ---
 
-# 📝 UPDATE DEV LOGS - 28 Oktober 2025 11:20 WIB (DEEPSEEK)
-
-## 🎯 **SESI IMPLEMENTASI: FASE 1-3 COMPLETION & STABILIZATION**
-
-### **TIMELINE WORK:**
-
-- **10:30-11:00** - FASE 1 Completion & Initial Testing
-- **11:00-11:15** - FASE 2 Service Integration
-- **11:15-11:20** - FASE 3 Advanced Features & Bug Fixes
-
-## ✅ **YANG SUDAH 100% SELESAI:**
-
-### **FASE 1: CORE INFRASTRUCTURE** ✅ **PRODUCTION-READY**
-
-- ✅ **OVHL_Global.lua** v1.0.2 - Single entry point dengan full API
-- ✅ **Auto-discovery System** - 6 core services terdeteksi & loaded
-- ✅ **ModuleLoader** v1.0.0 - Version consistency fix (6.0.0 → 1.0.0)
-- ✅ **Bootstrap Files** - Server & client initialization
-
-### **FASE 2: SERVICE INTEGRATION** ✅ **IMPLEMENTED**
-
-- ✅ **Bootstrap Updates** - OVHL exposed via `_G.OVHL` di server & client
-- ✅ **Logger.lua Refactor** - Core service menggunakan OVHL pattern
-- ✅ **ConfigService.lua Refactor** - Integrated dengan OVHL accessor
-- ✅ **EventBus.lua Refactor** - Enhanced dengan OVHL integration
-
-### **FASE 3: ADVANCED FEATURES** ✅ **IMPLEMENTED**
-
-- ✅ **`__config` Auto-Registration** - ModuleLoader otomatis register module configs
-- ✅ **Enhanced Error Handling** - pcall pada semua critical paths (EventBus callbacks, dll)
-- ✅ **ExampleModule Update** - Demo `__config` feature & OVHL access
-- ✅ **Graceful Degradation** - System tetap stable meski services belum ready
-
-## 🐛 **ERROR HANDLING & SOLUTIONS:**
-
-### **CRITICAL ERROR 1: EventBus Syntax Error**
-
-```lua
--- ERROR: Cannot use '...' outside of a vararg function
-return callback(...)  -- ❌ INVALID
-
--- SOLUTION: Use unpack(args)
-local args = {...}
-return callback(unpack(args))  -- ✅ FIXED
-```
-
-### **CRITICAL ERROR 2: ModuleLoader Version Inconsistency**
-
-```lua
--- BEFORE: Version mismatch
-ModuleLoader.__manifest = {version = "6.0.0"}  -- ❌ INCONSISTENT
-
--- AFTER: Standardized versions
-ModuleLoader.__manifest = {version = "1.0.0"}  -- ✅ CONSISTENT
-```
-
-### **CRITICAL ERROR 3: DateTime Locale Error**
-
-```lua
--- ERROR: Roblox missing id-ID locale
-DateTime.now():FormatLocalTime("LTS", "id-ID")  -- ❌ MISSING LOCALE
-
--- SOLUTION: Use en-US locale
-DateTime.now():FormatLocalTime("LTS", "en-US")  -- ✅ FIXED
-```
-
-### **SELENE WARNINGS RESOLUTION:**
-
-- ✅ **ReplicatedStorage** - Added proper `game:GetService()` declaration
-- ✅ **Unscoped Variables** - Fixed variable scope issues
-- ✅ **Global Usage** - Created `selene.toml` untuk allow `_G.OVHL` (framework core exception)
-
-## 🧪 **READY FOR TESTING:**
-
-### **FUNCTIONALITY TESTS:**
-
-```lua
--- SERVER TEST (Create script di ServerScriptService)
-print("OVHL Access:", _G.OVHL:GetService("Logger") ~= nil)
-print("Config Access:", _G.OVHL:GetConfig("ExampleModule") ~= nil)
-
--- CLIENT TEST (Create script di StarterPlayerScripts)
-print("OVHL Access:", _G.OVHL:GetService("StateManager") ~= nil)
-```
-
-### **AUTO-DISCOVERY VERIFICATION:**
-
-- ✅ 6 services loaded: Logger, EventBus, ConfigService, DataService, RemoteManager, ModuleLoader
-- ✅ Load order correct berdasarkan dependencies & priority
-- ✅ Zero initialization errors
-
-### **CONFIG SYSTEM TEST:**
-
-- ✅ ExampleModule `__config` auto-registered ke ConfigService
-- ✅ Modules bisa akses config via `OVHL:GetConfig("ModuleName")`
-- ✅ Graceful fallback ke default values
-
-## 🚨 **KNOWN LIMITATIONS & NOTES:**
-
-### **CLIENT-SIDE TESTING:**
-
-- `_G.OVHL` access di Command Bar mungkin limited karena context restrictions
-- Real testing harus via proper client scripts di StarterPlayerScripts
-
-### **SELENE COMPLIANCE:**
-
-- `_G.OVHL` usage di framework core sudah di-allow via `selene.toml`
-- Beberapa HUD.lua optimization warnings bisa diabaikan (bukan critical errors)
-
-## 🎯 **NEXT AI ACTION PLAN:**
-
-### **PRIORITAS 1: CLIENT-SIDE COMPLETION** ⏳ **BELUM DIMULAI**
-
-**Berdasarkan `1.4_REFERENSI_API.md` - Client APIs belum fully implemented:**
-
-```lua
--- ❌ BELUM IMPLEMENTED DI CLIENT:
-OVHL:SetState(key, value)      -- State management
-OVHL:GetState(key)             -- State access
-OVHL:Fire(eventName, ...)      -- Client → Server events
-OVHL:Invoke(eventName, ...)    -- Client → Server calls
-OVHL:Listen(eventName, callback) -- Server → Client events
-```
-
-**TARGET BESOK:**
-
-- Refactor `StateManager.lua` ke OVHL pattern
-- Refactor `RemoteClient.lua` ke OVHL pattern
-- Update client modules (`HUD.lua`, `TestDashboard.lua`)
-- Test full client-server communication cycle
-
-### **PRIORITAS 2: MODULE DEVELOPMENT EXAMPLES** ⏳ **BELUM DIMULAI**
-
-**Berdasarkan `2.2_RESEP_KODING.md` - Perlu practical examples:**
-
-- Create `ShopSystem` example (server module + client UI)
-- Create `InventorySystem` example dengan state management
-- Create `PlayerProfile` example dengan data persistence
-- Update cookbook dengan real-world patterns
-
-### **PRIORITAS 3: PERFORMANCE & OPTIMIZATION** ⏳ **BELUM DIMULAI**
-
-- Service caching optimization
-- Module loading performance
-- Memory usage profiling
-- Network call optimization
-
-## 🔍 **MANDATORY FOR NEXT AI:**
-
-**SEBELUM MULAI KERJA, NEXT AI HARUS:**
-
-1. **✅ BACA ULANG BLUEPRINT** - `1.3_ARSITEKTUR_INTI.md` v1.1.3
-2. **✅ REVIEW API REFERENCE** - `1.4_REFERENSI_API.md` v1.1.0
-3. **✅ PAHAMI STANDARDS** - `2.1_STANDARDS.md` v1.1.2
-4. **✅ CEK IMPLEMENTATION STATUS** - DEV_LOGS terkini
-
-**WORKFLOW REQUIREMENT:**
-
-- ❌ JANGAN bypass OVHL Global Accessor - selalu pakai `OVHL:GetService()`
-- ❌ JANGAN manual require core services - violation arsitektur v1.1
-- ✅ SELALU gunakan `__manifest` & `__config` untuk new modules
-- ✅ SELALU implement error handling dengan `pcall`
-- ✅ SELALU test di Roblox Studio Play Mode
-
-## 🏆 **FINAL STATUS:**
-
-**OVHL FRAMEWORK v1.1 CORE:** ✅ **STABLE & PRODUCTION-READY**
-
-**SERVER-SIDE:** ✅ **100% COMPLETE**
-**CLIENT-SIDE:** ⏳ **READY FOR IMPLEMENTATION**
-
-**ARCHITECTURE:** ✅ **VALIDATED & WORKING**
-**AUTO-DISCOVERY:** ✅ **PERFECT**
-**ERROR HANDLING:** ✅ **ROBUST**
+# 🔧 **3-PHASE FIX PLAN (DETAILED)**
 
 ---
 
-**NEXT AI INSTRUCTION:**
-Lanjutkan implementasi **Client-Side APIs** sesuai blueprint v1.1. Pastikan konsisten dengan OVHL Global Accessor pattern dan selalu test di Roblox Studio Play Mode.
+## 📋 **PHASE 1: FIX LIFECYCLE TIMING** ⏱️
 
-**LOG END - 28 Oktober 2025 11:20 WIB**
-**SESSION RESULT:** ✅ **FASE 1-3 COMPLETE, READY FOR CLIENT-SIDE DEVELOPMENT**
+### **🎯 TUJUAN:**
 
-### **🔍 CURRENT SITUATION:**
+Memastikan HUD hanya di-mount SETELAH semua modules discovered dan registered.
 
-**MASALAH:** Framework UI ternyata udah ada dan sophisticated banget, tapi:
+### **📦 FILES YANG DIUBAH:**
 
-- ✅ **UI System** udah lengkap (Component-based, Reactive State, Templates)
+1. `src/client/controllers/ClientController.lua`
+2. `src/client/controllers/UIController.lua`
+3. `src/client/init.client.lua`
 
-- ✅ **Core Framework** mature (Auto-Discovery, Dependency Injection, Service Layer)
+### **✅ CHECKLIST TASKS:**
 
-- ✅ **Network Layer** robust (Event-driven communication)
+#### **TASK 1.1: Add Event System to ClientController**
 
-- ❓ **Dokumentasi & Blueprint** belum ke-export
+```lua
+-- File: src/client/controllers/ClientController.lua
 
-- ❓ **Tim belum aware** scope yang udah ada
+-- ADD: Event callbacks storage
+function ClientController:Init()
+    self._controllers = {}
+    self._modules = {}
+    self._eventCallbacks = {} -- NEW: Event system
+    print("✅ ClientController Initialized")
+    return true
+end
 
-- ❓ **Prioritas development** perlu klarifikasi
+-- ADD: Event emitter
+function ClientController:Emit(eventName, ...)
+    if self._eventCallbacks[eventName] then
+        for _, callback in ipairs(self._eventCallbacks[eventName]) do
+            local success, err = pcall(callback, ...)
+            if not success then
+                warn("❌ Event callback error:", err)
+            end
+        end
+    end
+end
 
-### **🎯 OPSI YANG AVAILABLE:**
+-- ADD: Event listener
+function ClientController:On(eventName, callback)
+    if not self._eventCallbacks[eventName] then
+        self._eventCallbacks[eventName] = {}
+    end
+    table.insert(self._eventCallbacks[eventName], callback)
+end
 
-#### **OPTION 1: 🚀 EXTEND & DOCUMENT**
+-- MODIFY: AutoDiscoverModules (emit event setelah selesai)
+function ClientController:AutoDiscoverModules(modulesFolder)
+    -- ... existing code ...
 
-lua
+    print("🎉 Module discovery complete: " .. #loadOrder .. " modules processed")
 
-```
-\-- Fokus: Pakai yang udah ada, extend sesuai kebutuhan
-\-- Effort: LOW | Impact: HIGH
-```
+    -- NEW: Emit "ModulesReady" event
+    self:Emit("ModulesReady")
+    print("📢 Emitted: ModulesReady event")
 
-**Action Items:**
-
-- Document semua component UI yang udah ada
-
-- Bikin contoh implementasi (examples/)
-
-- Setup development workflow dengan hot-reload
-
-- Extend dengan advanced components (Modal, Carousel, etc)
-
-#### **OPTION 2: 🎨 THEME & POLISH**
-
-lua
-
-```
-\-- Fokus: Improve UX/UI dan consistency
-\-- Effort: MEDIUM | Impact: HIGH (User-facing)
-```
-
-**Action Items:**
-
-- Enhance StyleManager dengan design system
-
-- Add dark/light theme switching
-
-- Implement animation system
-
-- Add responsive layout helpers
-
-#### **OPTION 3: 🔧 PERFORMANCE & OPTIMIZATION**
-
-lua
-
-```
-\-- Fokus: Optimize yang udah ada
-\-- Effort: MEDIUM | Impact: MEDIUM (Technical)
+    return true
+end
 ```
 
-**Action Items:**
+#### **TASK 1.2: UIController Listen to ModulesReady**
 
-- Implement virtual scrolling untuk large lists
+```lua
+-- File: src/client/controllers/UIController.lua
 
-- Add memory leak detection
+function UIController:Init()
+    self._screens = {}
+    self._activeScreens = {}
+    self._uiEngine = OVHL:GetService("UIEngine")
+    self._hudMounted = false -- NEW: Flag to prevent duplicate mount
+    print("✅ UIController Initialized")
+    return true
+end
 
-- Optimize re-render patterns
+function UIController:Start()
+    print("🎨 UIController Started - Waiting for modules...")
 
-- Add performance monitoring
+    -- NEW: Listen to ModulesReady event
+    local clientController = OVHL:GetService("ClientController")
+    clientController:On("ModulesReady", function()
+        print("📢 ModulesReady event received!")
+        self:MountInitialUI()
+    end)
 
-#### **OPTION 4: 📱 NEW FEATURES**
+    return true
+end
 
-lua
+-- NEW: Separate mount function
+function UIController:MountInitialUI()
+    if self._hudMounted then
+        warn("⚠️ HUD already mounted, skipping")
+        return
+    end
+
+    print("🎯 Mounting initial UI...")
+
+    -- Force mount HUD
+    self:ForceMountHUD()
+
+    self._hudMounted = true
+    print("✅ Initial UI mounted successfully")
+end
+
+-- KEEP: Existing ForceMountHUD (no changes needed)
+```
+
+#### **TASK 1.3: Update Bootstrap Order**
+
+```lua
+-- File: src/client/init.client.lua
+-- NO CHANGES NEEDED - Just verify order is correct:
+-- 1. Init ClientController ✅
+-- 2. AutoDiscoverControllers (includes UIController) ✅
+-- 3. AutoDiscoverModules (includes HUD) → Emits "ModulesReady" ✅
+```
+
+### **🧪 SUCCESS CRITERIA (PHASE 1):**
 
 ```
-\-- Fokus: Tambah fitur baru yang missing
-\-- Effort: HIGH | Impact: DEPENDS
+Expected Output Log:
+✅ ClientController Initialized
+🔍 Auto-discovering controllers...
+📦 Discovered: UIController v1.2.0
+✅ UIController Initialized
+🎨 UIController Started - Waiting for modules...
+🔍 Auto-discovering modules...
+📦 Discovered: HUD v1.5.0
+🎉 Module discovery complete: 3 modules processed
+📢 Emitted: ModulesReady event
+📢 ModulesReady event received!
+🎯 Mounting initial UI...
+📦 HUD module found, creating instance...
+✅ HUD Initialized
+✅ HUD Rendered to PlayerGui
+✅ HUD DidMount called
+✅ Initial UI mounted successfully
 ```
 
-**Action Items:**
+---
 
-- Form validation system
+## 📋 **PHASE 2: FIX STATE SUBSCRIPTIONS** 🔔
 
-- Chart/Graph components
+### **🎯 TUJUAN:**
 
-- Drag & Drop system
+Memastikan StateManager subscriptions properly registered dan callbacks triggered saat state changes.
 
-- Real-time collaboration features
+### **📦 FILES YANG DIUBAH:**
 
-### **🤔 CONSIDERATIONS BUAT NEXT AI:**
+1. `src/client/controllers/StateManager.lua`
+2. `src/shared/OVHL_Global.lua` (verification only)
 
-#### **Technical Debt yang Perlu Diperhatikan:**
+### **✅ CHECKLIST TASKS:**
 
-1.  **ClientController** butuh testing yang lebih comprehensive
+#### **TASK 2.1: Enhanced Debug Logging in StateManager**
 
-2.  **Dependency cycles** potential di complex modules
+```lua
+-- File: src/client/controllers/StateManager.lua
 
-3.  **Error handling** di beberapa edge cases
+function StateManager:Subscribe(key, callback)
+    print("🎯 StateManager:Subscribe called")
+    print("  📌 Key:", key)
+    print("  📌 Callback type:", type(callback))
+    print("  📌 Current subscribers for", key .. ":", self._subscribers[key] and #self._subscribers[key] or 0)
 
-4.  **Memory management** untuk long-running sessions
+    if not self._subscribers[key] then
+        self._subscribers[key] = {}
+        print("  📋 Created new subscriber list for", key)
+    end
 
-#### **Quick Wins Available:**
+    table.insert(self._subscribers[key], callback)
+    print("  ➕ Added subscriber to", key)
+    print("  📊 Total subscribers for", key .. ":", #self._subscribers[key])
 
-- ✅ Bikin `UI.Modal` component (1-2 jam)
+    -- VERIFY: Print subscriber list
+    print("  🔍 Subscriber list:", self._subscribers)
 
-- ✅ Enhance `StyleManager` dengan CSS variables equivalent (2-3 jam)
+    -- Return unsubscribe function
+    return function()
+        print("🎯 Unsubscribing from", key)
+        if self._subscribers[key] then
+            for i, cb in ipairs(self._subscribers[key]) do
+                if cb == callback then
+                    table.remove(self._subscribers[key], i)
+                    print("  ➖ Removed subscriber from", key)
+                    print("  📊 Remaining subscribers:", #self._subscribers[key])
+                    break
+                end
+            end
+        end
+    end
+end
 
-- ✅ Add `UIUtils.CreateTooltip()` (30 menit)
+function StateManager:Set(key, value)
+    print("🎯 StateManager:Set called")
+    print("  📌 Key:", key)
+    print("  📌 New Value:", value)
+    print("  📌 Old Value:", self._states[key])
 
-- ✅ Implement hot-reload untuk development (1 jam)
+    local oldValue = self._states[key]
+    self._states[key] = value
 
-#### **Architecture Decisions Needed:**
+    print("  📊 State stored -", key, "=", value)
 
-- **State Management**: Redux pattern vs current reactive state?
+    -- CRITICAL: Check subscribers BEFORE notifying
+    print("  🔍 Checking subscribers for", key)
+    print("  🔍 self._subscribers:", self._subscribers)
+    print("  🔍 self._subscribers[" .. key .. "]:", self._subscribers[key])
 
-- **Styling Approach**: CSS-in-JS vs current StyleManager?
+    -- Notify subscribers
+    if self._subscribers[key] then
+        local subscriberCount = #self._subscribers[key]
+        print("  🔔 Found", subscriberCount, "subscribers for", key)
 
-- **Bundle Strategy**: Code splitting needed?
+        for i, callback in ipairs(self._subscribers[key]) do
+            print("  📨 Calling subscriber", i, "of", subscriberCount)
+            local success, err = pcall(callback, value, oldValue)
+            if not success then
+                warn("  ❌ StateManager callback error:", err)
+            else
+                print("  ✅ Subscriber", i, "executed successfully")
+            end
+        end
+    else
+        print("  ℹ️ No subscribers for", key)
+    end
 
-### **📋 RECOMMENDATION BUAT NEXT AI:**
+    return true
+end
+```
 
-**Priority Order:**
+#### **TASK 2.2: Verify OVHL Global Accessor**
 
-1.  **OPTION 1** (Document & Extend) - Paling urgent
+```lua
+-- File: src/shared/OVHL_Global.lua
 
-2.  **OPTION 2** (Theme & Polish) - High user impact
+-- VERIFY: Subscribe method properly delegates to StateManager
+function OVHL:Subscribe(key, callback)
+    print("🔑 OVHL:Subscribe called - Key:", key)
 
-3.  **OPTION 3** (Performance) - Untuk scaling
+    if self._stateManager then
+        print("  ✅ StateManager found, delegating...")
+        return self._stateManager:Subscribe(key, callback)
+    else
+        warn("  ❌ StateManager not found!")
+        return function() end
+    end
+end
 
-4.  **OPTION 4** (New Features) - Kalau ada specific requirements
+-- VERIFY: SetState properly delegates to StateManager
+function OVHL:SetState(key, value)
+    print("🔑 OVHL:SetState called - Key:", key, "Value:", value)
 
-**Pertanyaan buat Product/Team:**
+    if self._stateManager then
+        print("  ✅ StateManager found, delegating...")
+        return self._stateManager:Set(key, value)
+    else
+        warn("  ❌ StateManager not found!")
+        return false
+    end
+end
+```
 
-- Ada deadline specific untuk fitur UI tertentu?
+#### **TASK 2.3: Verify HUD Subscription Registration**
 
-- Target user experience level? (Basic vs Premium)
+```lua
+-- File: src/client/modules/HUD.lua
 
-- Team size dan skill level? (Akan affect complexity choice)
+function HUD:DidMount()
+    print("🎯 HUD DIDMOUNT CALLED")
+    print("  🔍 Checking OVHL availability...")
 
-- Performance requirements? (Mobile vs Desktop focus)
+    -- VERIFY: OVHL is accessible
+    local OVHL = require(game.ReplicatedStorage.OVHL_Shared.OVHL_Global)
+    print("  ✅ OVHL loaded:", OVHL ~= nil)
+
+    -- Subscribe to coins changes
+    print("  📞 Subscribing to 'coins' state...")
+    local unsubCoins = OVHL:Subscribe("coins", function(newCoins, oldCoins)
+        print("  🔄 COINS SUBSCRIPTION TRIGGERED!")
+        print("    📊 Old Coins:", oldCoins)
+        print("    📊 New Coins:", newCoins)
+        self:UpdateCoinsDisplay(newCoins)
+    end)
+
+    print("  ✅ Subscription registered, unsubscribe function:", type(unsubCoins))
+
+    table.insert(self.connections, unsubCoins)
+
+    -- Setup button click
+    self:SetupButtonHandlers()
+
+    print("✅ HUD Ready - Subscriptions active")
+end
+```
+
+### **🧪 SUCCESS CRITERIA (PHASE 2):**
+
+```
+Expected Output Log (when button clicked):
+🖱️ BUTTON CLICKED!
+🧪 BUTTON CLICK HANDLER
+💰 UPDATING COINS: 0 → 10
+🔑 OVHL:SetState called - Key: coins Value: 10
+  ✅ StateManager found, delegating...
+🎯 StateManager:Set called
+  📌 Key: coins
+  📌 New Value: 10
+  📌 Old Value: 0
+  📊 State stored - coins = 10
+  🔍 Checking subscribers for coins
+  🔔 Found 1 subscribers for coins
+  📨 Calling subscriber 1 of 1
+  🔄 COINS SUBSCRIPTION TRIGGERED!
+    📊 Old Coins: 0
+    📊 New Coins: 10
+  📊 UI UPDATED - Coins: 10
+  ✅ Subscriber 1 executed successfully
+✅ State updated + UI refreshed
+```
+
+---
+
+## 📋 **PHASE 3: IMPLEMENT REACTIVE UI** 🎨
+
+### **🎯 TUJUAN:**
+
+Memastikan UI components automatically re-render when subscribed state changes.
+
+### **📦 FILES YANG DIUBAH:**
+
+1. `src/client/modules/HUD.lua`
+2. `src/client/lib/BaseComponent.lua` (verification only)
+
+### **✅ CHECKLIST TASKS:**
+
+#### **TASK 3.1: Verify BaseComponent SetState**
+
+```lua
+-- File: src/client/lib/BaseComponent.lua
+
+function BaseComponent:SetState(newState)
+    print("🎨 BaseComponent:SetState called")
+    print("  📌 Current state:", self.state)
+    print("  📌 New state:", newState)
+
+    if type(newState) == "function" then
+        newState = newState(self.state)
+        print("  🔄 State computed from function")
+    end
+
+    -- Merge new state with existing
+    for key, value in pairs(newState) do
+        self.state[key] = value
+    end
+
+    print("  📊 Updated state:", self.state)
+
+    -- Re-render if mounted
+    if self._instance and self._instance.Parent then
+        print("  🔄 Component is mounted, triggering re-render...")
+
+        local parent = self._instance.Parent
+        local position = self._instance.Position
+
+        -- Call WillUnmount to cleanup
+        if self.WillUnmount then
+            print("    🧹 Calling WillUnmount...")
+            self:WillUnmount()
+        end
+
+        -- Destroy old instance
+        self._instance:Destroy()
+        print("    🗑️ Old instance destroyed")
+
+        -- Re-render
+        print("    🎨 Calling Render()...")
+        local newInstance = self:Render()
+        newInstance.Parent = parent
+        newInstance.Position = position
+        self._instance = newInstance
+        print("    ✅ New instance rendered")
+
+        -- Call DidMount again
+        if self.DidMount then
+            print("    📍 Calling DidMount()...")
+            self:DidMount()
+        end
+
+        print("  ✅ Re-render complete!")
+    else
+        print("  ℹ️ Component not mounted, skipping re-render")
+    end
+end
+```
+
+#### **TASK 3.2: HUD Use SetState for Reactivity**
+
+```lua
+-- File: src/client/modules/HUD.lua
+
+function HUD:DidMount()
+    print("🎯 HUD DIDMOUNT CALLED")
+
+    -- Subscribe to coins changes
+    local unsubCoins = OVHL:Subscribe("coins", function(newCoins, oldCoins)
+        print("🔄 COINS SUBSCRIPTION TRIGGERED:", oldCoins, "→", newCoins)
+
+        -- OPTION 1: Use SetState to trigger re-render (TRUE REACTIVE)
+        self:SetState({ coins = newCoins })
+
+        -- OPTION 2: Manual update (FALLBACK if SetState has issues)
+        -- self:UpdateCoinsDisplay(newCoins)
+    end)
+
+    table.insert(self.connections, unsubCoins)
+    self:SetupButtonHandlers()
+
+    print("✅ HUD Ready - Subscriptions active")
+end
+
+function HUD:Render()
+    print("🎨 HUD RENDER CALLED")
+
+    -- Get current coins from state
+    local currentCoins = self.state and self.state.coins or OVHL:GetState("coins", 0)
+    print("  📊 Rendering with coins:", currentCoins)
+
+    -- Create frame (existing code)
+    local frame = Instance.new("Frame")
+    -- ... existing frame setup ...
+
+    -- Coins Display
+    local coinsLabel = Instance.new("TextLabel")
+    coinsLabel.Name = "CoinsLabel"
+    coinsLabel.Text = "💰 Coins: " .. currentCoins -- Use state
+    -- ... existing label setup ...
+    coinsLabel.Parent = frame
+
+    -- Test Button
+    local testButton = Instance.new("TextButton")
+    -- ... existing button setup ...
+    testButton.Parent = frame
+
+    -- Store reference
+    self._currentGui = frame
+
+    print("✅ HUD Render Complete - Coins:", currentCoins)
+    return frame
+end
+
+-- OPTIONAL: Keep manual update as fallback
+function HUD:UpdateCoinsDisplay(coins)
+    print("🔄 Manual UI Update - Coins:", coins)
+
+    if self.state then
+        self.state.coins = coins
+    end
+
+    if self._currentGui then
+        local coinsLabel = self._currentGui:FindFirstChild("CoinsLabel")
+        if coinsLabel then
+            coinsLabel.Text = "💰 Coins: " .. coins
+            print("  📊 UI UPDATED via manual method")
+        end
+    end
+end
+```
+
+### **🧪 SUCCESS CRITERIA (PHASE 3):**
+
+```
+Expected Output Log (when button clicked):
+🖱️ BUTTON CLICKED!
+🧪 BUTTON CLICK HANDLER
+💰 UPDATING COINS: 0 → 10
+[... StateManager:Set logs ...]
+🔄 COINS SUBSCRIPTION TRIGGERED: 0 → 10
+🎨 BaseComponent:SetState called
+  📌 Current state: {coins = 0}
+  📌 New state: {coins = 10}
+  📊 Updated state: {coins = 10}
+  🔄 Component is mounted, triggering re-render...
+    🧹 Calling WillUnmount...
+    🗑️ Old instance destroyed
+    🎨 Calling Render()...
+    📊 Rendering with coins: 10
+    ✅ HUD Render Complete - Coins: 10
+    ✅ New instance rendered
+    📍 Calling DidMount()...
+    ✅ HUD Ready - Subscriptions active
+  ✅ Re-render complete!
+✅ State updated + UI refreshed
+```
+
+---
+
+# 🧪 **TESTING PROCEDURE (SETELAH 3 PHASES SELESAI)**
+
+## **TEST 1: Verify HUD Mounts at Correct Time**
+
+```
+Steps:
+1. Play Test di Roblox Studio
+2. Check Output console
+
+Expected:
+✅ ModulesReady event emitted AFTER HUD discovered
+✅ UIController mounts HUD AFTER ModulesReady received
+✅ No "HUD module not found" errors
+```
+
+## **TEST 2: Verify State Subscriptions Work**
+
+```
+Steps:
+1. Play Test
+2. Open Output console
+3. Click "ADD 10 COINS" button di HUD
+
+Expected:
+✅ "COINS SUBSCRIPTION TRIGGERED" log appears
+✅ Subscriber callback executes successfully
+✅ No "No subscribers" warnings
+```
+
+## **TEST 3: Verify UI Reactivity**
+
+```
+Steps:
+1. Play Test
+2. Click "ADD 10 COINS" button
+3. Observe HUD coin display
+
+Expected:
+✅ Coin display auto-updates dari 0 → 10 → 20 → ...
+✅ "Re-render complete" log appears
+✅ No manual refresh needed
+```
+
+## **TEST 4: Manual State Update Test**
+
+```
+Steps:
+1. Play Test
+2. Open Command Bar
+3. Run: `_G.OVHL:SetState("coins", 999)`
+
+Expected:
+✅ HUD automatically updates to show 999 coins
+✅ Subscription triggered
+✅ Re-render executed
+```
+
+---
+
+# 📊 **SUCCESS METRICS (OVERALL)**
+
+| Metric                     | Target | Current Status               |
+| -------------------------- | ------ | ---------------------------- |
+| HUD Mount Success          | 100%   | ❌ 0% (timing issue)         |
+| State Subscription Trigger | 100%   | ❌ 0% (not working)          |
+| UI Auto-Update             | 100%   | ❌ 0% (manual only)          |
+| Component Lifecycle        | 100%   | ⚠️ 80% (mounting broken)     |
+| Error-Free Play Test       | 100%   | ⚠️ 90% (no crashes but bugs) |
+
+**Target After Fix:**
+
+- ✅ All metrics at 100%
+- ✅ Zero errors in Output console
+- ✅ Smooth reactive UI behavior
 
 ---
 

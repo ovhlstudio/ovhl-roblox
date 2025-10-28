@@ -1,116 +1,74 @@
--- HUD v1.5.0 - Simplified Test Version
+-- HUD v2.0.0 - STABLE FIXED VERSION
 local OVHL = require(game.ReplicatedStorage.OVHL_Shared.OVHL_Global)
+local BaseComponent = require(script.Parent.Parent.lib.BaseComponent)
 
-local HUD = {}
+local HUD = setmetatable({}, BaseComponent)
 HUD.__index = HUD
 
+-- 🚨 CRITICAL: MUST HAVE CORRECT MANIFEST
 HUD.__manifest = {
     name = "HUD",
-    version = "1.5.0",
-    type = "module", 
+    version = "2.0.0",
+    type = "module",
     domain = "ui",
-    dependencies = {"StateManager", "RemoteClient"}
+    dependencies = {"StateManager", "RemoteClient"},
+    autoload = true,
+    priority = 100
 }
 
 function HUD:Init()
-    print("🎯 HUD INIT CALLED")
+    BaseComponent.Init(self)
+    print("🎯 HUD INIT CALLED - STABLE VERSION")
+    self.state = { coins = 0 }
     self.connections = {}
-    self._clickConnections = {}
     self._currentGui = nil
     return true
 end
 
+function HUD:Start()
+    print("🚀 HUD START CALLED - READY FOR MOUNTING")
+    return true
+end
+
 function HUD:DidMount()
-    print("🎯 HUD DIDMOUNT CALLED")
+    print("🎯 HUD DIDMOUNT CALLED - SETUP ACTIVE")
     
     -- Subscribe to coins changes
     local unsubCoins = OVHL:Subscribe("coins", function(newCoins, oldCoins)
         print("🔄 COINS SUBSCRIPTION:", oldCoins, "→", newCoins)
-        self:UpdateCoinsDisplay(newCoins)
+        self:SetState({ coins = newCoins })
     end)
-    
     table.insert(self.connections, unsubCoins)
     
     -- Setup button click
-    self:SetupButtonHandlers()
-    
-    print("✅ HUD Ready - Subscriptions active")
-end
-
-function HUD:SetupButtonHandlers()
-    if not self._currentGui then 
-        print("❌ No current GUI for button setup")
-        return 
+    if self._currentGui then
+        local testButton = self._currentGui:FindFirstChild("TestButton")
+        if testButton then
+            testButton.MouseButton1Click:Connect(function()
+                print("🖱️ BUTTON CLICKED!")
+                local current = OVHL:GetState("coins", 0)
+                OVHL:SetState("coins", current + 10)
+            end)
+        end
     end
     
-    local testButton = self._currentGui:FindFirstChild("TestButton")
-    if testButton then
-        print("🎯 Setting up TestButton click handler...")
-        
-        local connection = testButton.MouseButton1Click:Connect(function()
-            print("🖱️ BUTTON CLICKED!")
-            self:OnTestButtonClick()
-        end)
-        
-        table.insert(self._clickConnections, connection)
-        print("✅ Button handler setup complete")
-    else
-        print("❌ TestButton not found in current GUI")
-    end
-end
-
-function HUD:OnTestButtonClick()
-    print("🧪 BUTTON CLICK HANDLER")
-    
-    local currentCoins = OVHL:GetState("coins", 0)
-    local newCoins = currentCoins + 10
-    
-    print("💰 UPDATING COINS:", currentCoins, "→", newCoins)
-    
-    -- Update state
-    OVHL:SetState("coins", newCoins)
-    
-    -- Force immediate UI update
-    self:UpdateCoinsDisplay(newCoins)
-    
-    print("✅ State updated + UI refreshed")
-end
-
-function HUD:UpdateCoinsDisplay(coins)
-    if not self._currentGui then
-        print("❌ No current GUI to update")
-        return
-    end
-    
-    local coinsLabel = self._currentGui:FindFirstChild("CoinsLabel")
-    if coinsLabel then
-        coinsLabel.Text = "💰 Coins: " .. coins
-        print("📊 UI UPDATED - Coins:", coins)
-    else
-        print("❌ CoinsLabel not found")
-    end
+    print("✅ HUD Fully Operational")
 end
 
 function HUD:WillUnmount()
     print("🧹 HUD WillUnmount")
-    
     for _, unsub in ipairs(self.connections) do
-        unsub()
+        if type(unsub) == "function" then
+            pcall(unsub)
+        end
     end
-    
-    for _, connection in ipairs(self._clickConnections) do
-        connection:Disconnect()
-    end
-    
     self._currentGui = nil
 end
 
 function HUD:Render()
     print("🎨 HUD RENDER CALLED")
+    local currentCoins = self.state.coins or OVHL:GetState("coins", 0)
     
-    local currentCoins = OVHL:GetState("coins", 0)
-    
-    -- Create simple frame
     local frame = Instance.new("Frame")
     frame.Name = "HUDMainFrame"
     frame.Size = UDim2.new(0, 300, 0, 200)
@@ -126,7 +84,7 @@ function HUD:Render()
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, 0, 0, 30)
     title.Position = UDim2.new(0, 0, 0, 0)
-    title.Text = "🎮 OVHL HUD v1.5"
+    title.Text = "🎮 OVHL HUD v2.0.0 (STABLE)"
     title.TextColor3 = Color3.new(1, 1, 1)
     title.TextSize = 18
     title.Font = Enum.Font.GothamBold
@@ -151,7 +109,7 @@ function HUD:Render()
     testButton.Name = "TestButton"
     testButton.Size = UDim2.new(1, -40, 0, 40)
     testButton.Position = UDim2.new(0, 20, 0, 120)
-    testButton.Text = "🎯 ADD 10 COINS"
+    testButton.Text = "🎯 ADD 10 COINS (STABLE)"
     testButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
     testButton.TextColor3 = Color3.new(1, 1, 1)
     testButton.TextSize = 14
@@ -160,13 +118,9 @@ function HUD:Render()
     local buttonCorner = Instance.new("UICorner")
     buttonCorner.CornerRadius = UDim.new(0, 6)
     buttonCorner.Parent = testButton
-    
     testButton.Parent = frame
     
-    -- Store reference
     self._currentGui = frame
-    
-    print("✅ HUD Render Complete - Coins:", currentCoins)
     return frame
 end
 

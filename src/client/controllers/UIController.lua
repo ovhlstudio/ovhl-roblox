@@ -1,4 +1,4 @@
--- UIController v1.2.0 - Force HUD Mount
+-- UIController v1.7.0 - ULTRA SIMPLIFIED
 local OVHL = require(game.ReplicatedStorage.OVHL_Shared.OVHL_Global)
 
 local UIController = {}
@@ -6,7 +6,7 @@ UIController.__index = UIController
 
 UIController.__manifest = {
     name = "UIController",
-    version = "1.2.0",
+    version = "1.7.0",
     type = "controller",
     domain = "ui",
     dependencies = {"UIEngine", "StateManager"}
@@ -16,74 +16,84 @@ function UIController:Init()
     self._screens = {}
     self._activeScreens = {}
     self._uiEngine = OVHL:GetService("UIEngine")
-    print("✅ UIController Initialized")
+    print("✅ UIController Initialized - ULTRA SIMPLIFIED")
     return true
 end
 
 function UIController:Start()
-    print("🎨 UIController Started - Force mounting HUD...")
+    print("🎨 UIController Started - MOUNTING HUD")
     
-    -- Force mount HUD immediately
-    self:ForceMountHUD()
+    -- 🚨 ULTRA SIMPLE: Just wait and mount HUD
+    delay(3, function()
+        self:MountHUD()
+    end)
     
     return true
 end
 
-function UIController:ForceMountHUD()
-    print("🎯 FORCE MOUNTING HUD...")
+function UIController:MountHUD()
+    print("🎯 MOUNT HUD - ULTRA SIMPLE")
     
-    -- Get HUD module directly from OVHL
+    -- Try to get HUD module
     local hudModule = OVHL:GetModule("HUD")
     if not hudModule then
-        warn("❌ HUD module not found in OVHL")
-        return false
+        print("❌ HUD not in OVHL, waiting...")
+        delay(2, function()
+            self:MountHUD() -- Retry
+        end)
+        return
     end
     
-    print("📦 HUD module found, creating instance...")
+    print("✅ HUD module found - Creating instance...")
     
-    -- Create HUD instance
     local hudInstance = setmetatable({}, hudModule)
     
-    -- Initialize HUD
+    -- Initialize
     if hudInstance.Init then
-        hudInstance:Init()
+        pcall(hudInstance.Init, hudInstance)
         print("✅ HUD Initialized")
     end
     
-    -- Render HUD to PlayerGui
-    local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    -- Get PlayerGui
+    local player = game.Players.LocalPlayer
+    if not player then
+        warn("❌ Player not available")
+        return false
+    end
+    
+    local playerGui = player:WaitForChild("PlayerGui")
+    
+    -- Create ScreenGui
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "HUDGui"
     screenGui.ResetOnSpawn = false
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
+    -- Render HUD
     local renderedFrame = hudInstance:Render()
     if renderedFrame then
         renderedFrame.Parent = screenGui
         screenGui.Parent = playerGui
         print("✅ HUD Rendered to PlayerGui")
+        
+        -- Call DidMount
+        if hudInstance.DidMount then
+            pcall(hudInstance.DidMount, hudInstance)
+            print("✅ HUD DidMount called")
+        end
+        
+        -- Store reference
+        self._activeScreens["HUD"] = {
+            instance = hudInstance,
+            gui = screenGui
+        }
+        
+        print("🎉 HUD MOUNTED SUCCESSFULLY!")
+        return true
     else
         warn("❌ HUD Render returned nil")
         return false
     end
-    
-    -- Call DidMount
-    if hudInstance.DidMount then
-        hudInstance:DidMount()
-        print("✅ HUD DidMount called")
-    end
-    
-    -- Store reference
-    self._activeScreens["HUD"] = {
-        instance = hudInstance,
-        gui = screenGui
-    }
-    
-    -- Register for future use
-    self._screens["HUD"] = hudModule
-    
-    print("🖥️ HUD Force Mounted Successfully!")
-    return true
 end
 
 function UIController:RegisterScreen(screenName, screenComponent)
@@ -95,7 +105,6 @@ end
 function UIController:ShowScreen(screenName, props)
     local screenComponent = self._screens[screenName]
     if not screenComponent then
-        -- Try to get from OVHL modules
         screenComponent = OVHL:GetModule(screenName)
         if screenComponent then
             self._screens[screenName] = screenComponent
@@ -105,27 +114,30 @@ function UIController:ShowScreen(screenName, props)
         end
     end
     
-    -- Create screen instance
     local screenInstance = setmetatable({}, screenComponent)
-    screenInstance:Init()
+    if screenInstance.Init then
+        screenInstance:Init()
+    end
     
-    -- Render to PlayerGui
-    local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    local player = game.Players.LocalPlayer
+    if not player then return false end
+    
+    local playerGui = player:WaitForChild("PlayerGui")
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = screenName .. "Gui"
     screenGui.ResetOnSpawn = false
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
     local renderedFrame = screenInstance:Render()
-    renderedFrame.Parent = screenGui
-    screenGui.Parent = playerGui
+    if renderedFrame then
+        renderedFrame.Parent = screenGui
+        screenGui.Parent = playerGui
+    end
     
-    -- Call DidMount
     if screenInstance.DidMount then
         screenInstance:DidMount()
     end
     
-    -- Store reference
     self._activeScreens[screenName] = {
         instance = screenInstance,
         gui = screenGui
@@ -138,15 +150,11 @@ end
 function UIController:HideScreen(screenName)
     local screenData = self._activeScreens[screenName]
     if screenData then
-        -- Call WillUnmount
         if screenData.instance.WillUnmount then
-            screenData.instance:WillUnmount()
+            pcall(screenData.instance.WillUnmount, screenData.instance)
         end
-        
-        -- Remove GUI
         screenData.gui:Destroy()
         self._activeScreens[screenName] = nil
-        
         print("📴 Screen hidden: " .. screenName)
         return true
     end

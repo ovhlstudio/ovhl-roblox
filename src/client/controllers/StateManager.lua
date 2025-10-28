@@ -1,23 +1,22 @@
--- StateManager v1.2.0 - Debug Version
+-- StateManager v1.3.0 - Complete Enhanced Debugging
 local OVHL = require(game.ReplicatedStorage.OVHL_Shared.OVHL_Global)
 
 local StateManager = {}
 StateManager.__index = StateManager
 
--- Auto-discovery manifest
 StateManager.__manifest = {
     name = "StateManager",
-    version = "1.2.0",
+    version = "1.3.0",
     type = "controller",
     priority = 90,
     domain = "state",
-    description = "Client-side state management"
+    description = "State management with complete enhanced debugging"
 }
 
 function StateManager:Init()
     self._states = {}
     self._subscribers = {}
-    print("✅ StateManager Initialized")
+    print("✅ StateManager Initialized with Enhanced Debugging")
     return true
 end
 
@@ -26,35 +25,33 @@ function StateManager:Start()
     return true
 end
 
--- OVHL API: Set state value
 function StateManager:Set(key, value)
-    print("🎯 StateManager:Set called - Key:", key, "Value:", value)
-    
+    print("🎯 StateManager:Set ENHANCED DEBUG")
+    print("  📌 Key:", key)
+    print("  📌 Value:", value)
+    print("  📌 Old Value:", self._states[key])
     local oldValue = self._states[key]
     self._states[key] = value
-    
-    print("📊 State stored -", key, "=", value)
-    
-    -- Notify subscribers
+    print("  💾 State stored:", key, "=", value)
+    print("  🔍 Subscription Check for:", key)
     if self._subscribers[key] then
-        print("🔔 Notifying", #self._subscribers[key], "subscribers for", key)
+        local count = #self._subscribers[key]
+        print("  🔔 Found", count, "subscribers for", key)
         for i, callback in ipairs(self._subscribers[key]) do
-            print("  📨 Calling subscriber", i, "for", key)
+            print("  📨 Executing subscriber", i, "/", count)
             local success, err = pcall(callback, value, oldValue)
             if not success then
-                warn("❌ StateManager callback error: " .. tostring(err))
+                warn("  ❌ Subscriber error:", err)
             else
                 print("  ✅ Subscriber", i, "executed successfully")
             end
         end
     else
-        print("ℹ️ No subscribers for", key)
+        print("  ℹ️ No subscribers for", key)
     end
-    
     return true
 end
 
--- OVHL API: Get state value
 function StateManager:Get(key, defaultValue)
     local value = self._states[key]
     if value == nil then
@@ -63,26 +60,26 @@ function StateManager:Get(key, defaultValue)
     return value
 end
 
--- OVHL API: Subscribe to state changes
 function StateManager:Subscribe(key, callback)
-    print("🎯 StateManager:Subscribe called - Key:", key)
-    
+    print("🎯 StateManager:Subscribe ENHANCED DEBUG")
+    print("  📌 Key:", key)
+    print("  📌 Callback type:", type(callback))
     if not self._subscribers[key] then
         self._subscribers[key] = {}
         print("  📋 Created new subscriber list for", key)
     end
-    
     table.insert(self._subscribers[key], callback)
-    print("  ➕ Added subscriber to", key, "- Total:", #self._subscribers[key])
-    
-    -- Return unsubscribe function
+    local count = #self._subscribers[key]
+    print("  ➕ Added subscriber to", key)
+    print("  📊 Total subscribers for", key .. ":", count)
     return function()
         print("🎯 Unsubscribing from", key)
         if self._subscribers[key] then
             for i, cb in ipairs(self._subscribers[key]) do
                 if cb == callback then
                     table.remove(self._subscribers[key], i)
-                    print("  ➖ Removed subscriber from", key, "- Remaining:", #self._subscribers[key])
+                    print("  ➖ Removed subscriber from", key)
+                    print("  📊 Remaining:", #self._subscribers[key])
                     break
                 end
             end

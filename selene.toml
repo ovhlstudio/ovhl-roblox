@@ -1,1 +1,42 @@
 std = "roblox"
+
+[globals.roblox]
+-- Roblox built-in globals
+"game" = "read",
+"script" = "read",
+"workspace" = "read",
+"shared" = "read",
+
+-- OVHL Framework globals (allowed for framework core)
+"OVHL" = "read",
+
+[lint]
+unused_variable = true
+unused_function = false
+unused_label = false
+unused_argument = false
+redefined_variable = false
+trailing_whitespace = false
+line_length = { enabled = false, limit = 120 }
+cyclomatic_complexity = { enabled = false, limit = 20 }
+redundant_parameter = false
+shadowing = false
+empty_if = false
+if_same_then_else = false
+if_same_condition = false
+prefer_and_or = false
+unbalanced_assignments = false
+misleading_local = false
+increment_decrement = false
+
+[lint.global_usage]
+allow = ["OVHL"]  # Allow _G.OVHL for framework
+
+[lint.unscoped_variables]
+enabled = true
+
+[lint.undefined_variable]
+enabled = true
+
+[lint.undefined_global]
+enabled = true

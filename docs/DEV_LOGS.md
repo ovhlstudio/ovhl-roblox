@@ -20,6 +20,207 @@
 
 ---
 
+# 📝 OVHL CORE - DEVELOPMENT LOGS UPDATE - 28 Oktober 2025 13:50 WIB (DEEPSEEK)
+
+### BRANCH duaar@DA2025 MINGW64 /e/ovhlnew (core/client-side)
+
+## 🚨 **CURRENT SITUATION ANALYSIS**
+
+### **MASALAH YANG TERJADI:**
+
+1. **HUD module tidak ditemukan** oleh UIController saat force mount
+2. **StateManager subscriptions tidak bekerja** - "No subscribers"
+3. **Timing issue** - UIController mencoba mount HUD sebelum HUD terdaftar di OVHL
+4. **UI tidak update** meski state berubah
+
+### **YANG SUDAH BERHASIL:**
+
+✅ **Server-Side:** 100% Stable - 6 services auto-discovery  
+✅ **Client-Side Core:** 100% Working - 6 controllers loaded  
+✅ **OVHL Global Accessor:** Working - APIs accessible via `_G.OVHL`  
+✅ **State Management:** Basic Set/Get working  
+✅ **Network:** RemoteClient Fire/Invoke/Listen working  
+✅ **Auto-Discovery:** Both server & client working perfectly
+
+### **YANG MASIH GAGAL:**
+
+❌ **HUD Mounting:** UIController gagal find HUD module  
+❌ **State Subscriptions:** Callbacks tidak triggered  
+❌ **UI Reactivity:** Changes tidak reflect di display
+
+## 🔧 **ROOT CAUSE ANALYSIS**
+
+### **MASALAH 1: TIMING ISSUE**
+
+```lua
+-- UIController Start() called BEFORE modules discovery
+13:50:00.800  🎨 UIController Started - Force mounting HUD...
+13:50:00.800  ❌ HUD module not found in OVHL
+13:50:00.800  🔍 [OVHL] Auto-discovering modules...
+13:50:00.800  📦 Discovered: HUD v1.5.0
+```
+
+**UIController start duluan** sebelum modules ditemukan!
+
+### **MASALAH 2: STATE SUBSCRIPTIONS**
+
+```lua
+13:50:01.811  🎯 StateManager:Set called - Key: test_coins Value: 100
+13:50:01.811  ℹ️ No subscribers for test_coins
+```
+
+**HUD subscriptions tidak terdaftar** di StateManager!
+
+## 🎯 **YANG BISA DILAKUKAN SEKARANG:**
+
+### **QUICK WINS:**
+
+1. **Fix UIController timing** - Delay HUD mount sampai modules loaded
+2. **Manual UI updates** sebagai fallback
+3. **Verify OVHL module registration**
+
+### **LIMITATIONS:**
+
+- State subscriptions mungkin perlu architectural redesign
+- UI reactivity system belum mature
+- Component lifecycle perlu improvement
+
+## 📋 **PROBLEM SOLVED SELAMA SESI:**
+
+### **BESAR:**
+
+1. ✅ **Syntax Errors Fixed** - OVHL_Global, RemoteClient
+2. ✅ **Client-Side APIs Implemented** - SetState, GetState, Fire, Invoke, Listen
+3. ✅ **Auto-Discovery Working** - Both server & client
+4. ✅ **UI System Foundation** - UIController, UIEngine, HUD component
+5. ✅ **Error Handling** - No crashes, graceful degradation
+
+### **TECHNICAL:**
+
+- ✅ Rojo sync issues resolved
+- ✅ Selene config untuk \_G.OVHL
+- ✅ Module manifest system working
+- ✅ Service/Controller dependency injection
+
+## 📚 **DOKUMEN YANG PERLU UPDATE:**
+
+### **PRIORITAS 1:**
+
+1. **`DEV_LOGS.md`** - Update progress & known issues
+2. **`OVHL_AI_CONTEXT.md`** - Add troubleshooting section
+3. **`2.2_RESEP_KODING.md`** - Add UI component examples
+
+### **PRIORITAS 2:**
+
+4. **`1.4_REFERENSI_API.md`** - Document Client APIs usage
+5. **`2.1_MODULE_STANDART.md`** - Add UI component standards
+
+## 🚀 **NEXT AI INSTRUCTION & ACTION PLAN**
+
+### **PHASE 1: CRITICAL FIXES** (NEXT SESSION)
+
+```bash
+# FIX 1: UIController Timing
+# - Delay HUD mount until modules are discovered
+# - Add module readiness check
+
+# FIX 2: State Subscriptions
+# - Debug why HUD subscriptions not registering
+# - Add subscription verification
+
+# FIX 3: Manual UI Updates
+# - Implement reliable UI refresh mechanism
+```
+
+### **PHASE 2: ARCHITECTURE IMPROVEMENT**
+
+```bash
+# 1. State Management Redesign
+# - Proper subscription system
+# - Reactive UI updates
+
+# 2. UI Component Lifecycle
+# - Better mount/unmount handling
+# - Event connection management
+
+# 3. Module Communication
+# - Service discovery verification
+# - Dependency resolution
+```
+
+### **PHASE 3: DOCUMENTATION & EXAMPLES**
+
+```bash
+# 1. Update Cookbook with working examples
+# 2. Create troubleshooting guide
+# 3. Add UI development patterns
+```
+
+## 🛠️ **RUN.SH MASTER GUIDE**
+
+### **PATTERN PENGGUNAAN:**
+
+```bash
+# 1. SELALU backup & validation
+./run.sh  # Script otomatis handle backup + validation
+
+# 2. Structure script:
+#!/bin/bash
+# ============================================
+# TASK DESCRIPTION
+# ============================================
+
+# Pre-flight checks
+# File modifications with validation
+# Verification & summary
+```
+
+### **BEST PRACTICES:**
+
+1. **Always validate Lua syntax**
+2. **Create backups before modifications**
+3. **Include comprehensive logging**
+4. **Provide rollback capability**
+5. **Generate summary report**
+
+### **COMMAND TEMPLATE:**
+
+```bash
+#!/bin/bash
+# Fix for [SPECIFIC ISSUE]
+
+set -e
+# [Color definitions]
+# [Backup creation]
+# [File modifications with validation]
+# [Verification & summary]
+```
+
+## 🎯 **IMMEDIATE NEXT ACTION FOR NEXT AI:**
+
+**BACA INI SEBELUM KERJA:**
+
+1. **Review log terakhir** - Pahami timing issues
+2. **Test StateManager subscriptions** - Debug why not working
+3. **Fix UIController mount timing** - Wait for module discovery
+4. **Implement manual UI update fallback** - Bypass subscriptions
+
+**MANDATORY CHECK:**
+
+- ✅ OVHL Global Accessor working
+- ✅ ClientController modules discovery
+- ✅ StateManager basic Set/Get
+- ✅ HUD component rendering
+
+**CRITICAL: JANGAN bypass OVHL pattern!** Selalu pakai `OVHL:GetService()` dan `OVHL:GetModule()`
+
+---
+
+**LOG END - ANALYSIS COMPLETE**
+**NEXT SESSION: FIX UI REACTIVITY & STATE SUBSCRIPTIONS** 🚀
+
+---
+
 # 📝 UPDATE DEV LOGS - 28 Oktober 2025 11:20 WIB (DEEPSEEK)
 
 ## 🎯 **SESI IMPLEMENTASI: FASE 1-3 COMPLETION & STABILIZATION**

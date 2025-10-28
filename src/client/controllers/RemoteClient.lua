@@ -1,94 +1,112 @@
--- RemoteClient v5 - Simple Communication
+-- RemoteClient v1.1.2 - OVHL Pattern (STARTUP FIXED)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local RemoteClient = {}
 RemoteClient.__index = RemoteClient
 
--- 🔥 MANIFEST FOR AUTO-DISCOVERY
--- 🔥 MANIFEST FOR AUTO-DISCOVERY
+-- Auto-discovery manifest
 RemoteClient.__manifest = {
     name = "RemoteClient",
-    version = "1.0.0",
+    version = "1.1.2", 
     type = "controller",
-    domain = "network",
-    dependencies = {},
-    autoload = true,
     priority = 100,
-    description = "Client-server communication controller",
+    domain = "network",
+    description = "Client-server communication"
 }
 
 function RemoteClient:Init()
-	self.connected = false
-	print("🔧 RemoteClient initialized")
-	return true
+    self._remoteEvents = {}
+    self._remoteFunctions = {}
+    self._listeners = {}
+    
+    -- SETUP REMOTES IMMEDIATELY IN INIT
+    self:SetupRemotes()
+    
+    print("✅ RemoteClient Initialized with remotes setup")
+    return true
 end
 
 function RemoteClient:Start()
-	print("📡 RemoteClient connecting...")
-
-	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local startTime = tick()
-
-	while tick() - startTime < 10 do
-		local success = pcall(function()
-			self.remoteFolder = ReplicatedStorage:WaitForChild("OVHL_Remotes", 1)
-			if self.remoteFolder then
-				self.mainEvent = self.remoteFolder:WaitForChild("MainRemoteEvent", 1)
-				self.mainFunction = self.remoteFolder:WaitForChild("MainRemoteFunction", 1)
-			end
-		end)
-
-		if success and self.mainEvent and self.mainFunction then
-			self.connected = true
-			print("✅ RemoteClient connected!")
-			return true
-		end
-		wait(0.5)
-	end
-
-	warn("❌ RemoteClient failed to connect")
-	return false
+    print("✅ RemoteClient Started")
+    return true
 end
 
-function RemoteClient:Invoke(eventName, ...)
-	if not self.connected then
-		return false, "Not connected"
-	end
-
-	local args = { ... }
-	local success, result = pcall(function()
-		return self.mainFunction:InvokeServer(eventName, unpack(args))
-	end)
-
-	if success then
-		return result
-	else
-		return false, result
-	end
+function RemoteClient:SetupRemotes()
+    local remotesFolder = ReplicatedStorage:FindFirstChild("OVHL_Remotes")
+    if not remotesFolder then
+        remotesFolder = Instance.new("Folder")
+        remotesFolder.Name = "OVHL_Remotes"
+        remotesFolder.Parent = ReplicatedStorage
+    end
+    
+    -- Store references
+    self._remoteFolder = remotesFolder
 end
 
-function RemoteClient:Listen(eventName, callback)
-	if not self.connected then
-		return function() end
-	end
-
-	return self.mainEvent.OnClientEvent:Connect(function(receivedEventName, ...)
-		if receivedEventName == eventName then
-			local args = { ... }
-			callback(unpack(args))
-		end
-	end)
-end
-
+-- OVHL API: Fire event to server
 function RemoteClient:Fire(eventName, ...)
-	if not self.connected then
-		return false
-	end
-	self.mainEvent:FireServer(eventName, ...)
-	return true
+    local args = {...}
+    
+    -- Ensure remotes are setup
+    if not self._remoteFolder then
+        self:SetupRemotes()
+    end
+    
+    local remoteEvent = self._remoteFolder:FindFirstChild(eventName)
+    if not remoteEvent then
+        remoteEvent = Instance.new("RemoteEvent")
+        remoteEvent.Name = eventName
+        remoteEvent.Parent = self._remoteFolder
+    end
+    
+    remoteEvent:FireServer(unpack(args))
+    return true
 end
 
--- Helper method untuk auto-discovery
-function RemoteClient:IsConnected()
-	return self.connected
+-- OVHL API: Invoke server function
+function RemoteClient:Invoke(eventName, ...)
+    local args = {...}
+    
+    -- Ensure remotes are setup
+    if not self._remoteFolder then
+        self:SetupRemotes()
+    end
+    
+    local remoteFunction = self._remoteFolder:FindFirstChild(eventName)
+    if not remoteFunction then
+        remoteFunction = Instance.new("RemoteFunction") 
+        remoteFunction.Name = eventName
+        remoteFunction.Parent = self._remoteFolder
+    end
+    
+    local success, result = pcall(function()
+        return remoteFunction:InvokeServer(unpack(args))
+    end)
+    
+    if not success then
+        warn("RemoteClient Invoke failed: " .. tostring(result))
+        return nil
+    end
+    
+    return result
+end
+
+-- OVHL API: Listen to server events  
+function RemoteClient:Listen(eventName, callback)
+    -- Ensure remotes are setup
+    if not self._remoteFolder then
+        self:SetupRemotes()
+    end
+    
+    local remoteEvent = self._remoteFolder:FindFirstChild(eventName)
+    if not remoteEvent then
+        remoteEvent = Instance.new("RemoteEvent")
+        remoteEvent.Name = eventName
+        remoteEvent.Parent = self._remoteFolder
+    end
+    
+    local connection = remoteEvent.OnClientEvent:Connect(callback)
+    return connection
 end
 
 return RemoteClient

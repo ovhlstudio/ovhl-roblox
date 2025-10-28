@@ -1,93 +1,173 @@
--- HUD v5 - Simple HUD
-local BaseComponent = require(script.Parent.Parent.lib.BaseComponent)
+-- HUD v1.5.0 - Simplified Test Version
+local OVHL = require(game.ReplicatedStorage.OVHL_Shared.OVHL_Global)
 
-local HUD = setmetatable({}, BaseComponent)
+local HUD = {}
 HUD.__index = HUD
 
--- 🔥 MANIFEST FOR AUTO-DISCOVERY
--- 🔥 MANIFEST FOR AUTO-DISCOVERY
 HUD.__manifest = {
     name = "HUD",
-    version = "1.0.0",
-    type = "module",
+    version = "1.5.0",
+    type = "module", 
     domain = "ui",
-    dependencies = {},
-    autoload = true,
-    priority = 50,
-    description = "Heads-up display component",
+    dependencies = {"StateManager", "RemoteClient"}
 }
 
 function HUD:Init()
-	BaseComponent.Init(self)
-	self.state = {
-		coins = 1000,
-		gems = 100,
-		level = 1,
-		health = 100,
-	}
+    print("🎯 HUD INIT CALLED")
+    self.connections = {}
+    self._clickConnections = {}
+    self._currentGui = nil
+    return true
+end
+
+function HUD:DidMount()
+    print("🎯 HUD DIDMOUNT CALLED")
+    
+    -- Subscribe to coins changes
+    local unsubCoins = OVHL:Subscribe("coins", function(newCoins, oldCoins)
+        print("🔄 COINS SUBSCRIPTION:", oldCoins, "→", newCoins)
+        self:UpdateCoinsDisplay(newCoins)
+    end)
+    
+    table.insert(self.connections, unsubCoins)
+    
+    -- Setup button click
+    self:SetupButtonHandlers()
+    
+    print("✅ HUD Ready - Subscriptions active")
+end
+
+function HUD:SetupButtonHandlers()
+    if not self._currentGui then 
+        print("❌ No current GUI for button setup")
+        return 
+    end
+    
+    local testButton = self._currentGui:FindFirstChild("TestButton")
+    if testButton then
+        print("🎯 Setting up TestButton click handler...")
+        
+        local connection = testButton.MouseButton1Click:Connect(function()
+            print("🖱️ BUTTON CLICKED!")
+            self:OnTestButtonClick()
+        end)
+        
+        table.insert(self._clickConnections, connection)
+        print("✅ Button handler setup complete")
+    else
+        print("❌ TestButton not found in current GUI")
+    end
+end
+
+function HUD:OnTestButtonClick()
+    print("🧪 BUTTON CLICK HANDLER")
+    
+    local currentCoins = OVHL:GetState("coins", 0)
+    local newCoins = currentCoins + 10
+    
+    print("💰 UPDATING COINS:", currentCoins, "→", newCoins)
+    
+    -- Update state
+    OVHL:SetState("coins", newCoins)
+    
+    -- Force immediate UI update
+    self:UpdateCoinsDisplay(newCoins)
+    
+    print("✅ State updated + UI refreshed")
+end
+
+function HUD:UpdateCoinsDisplay(coins)
+    if not self._currentGui then
+        print("❌ No current GUI to update")
+        return
+    end
+    
+    local coinsLabel = self._currentGui:FindFirstChild("CoinsLabel")
+    if coinsLabel then
+        coinsLabel.Text = "💰 Coins: " .. coins
+        print("📊 UI UPDATED - Coins:", coins)
+    else
+        print("❌ CoinsLabel not found")
+    end
+end
+
+function HUD:WillUnmount()
+    print("🧹 HUD WillUnmount")
+    
+    for _, unsub in ipairs(self.connections) do
+        unsub()
+    end
+    
+    for _, connection in ipairs(self._clickConnections) do
+        connection:Disconnect()
+    end
+    
+    self._currentGui = nil
 end
 
 function HUD:Render()
-	local container = Instance.new("Frame")
-	container.Size = UDim2.new(1, 0, 1, 0)
-	container.BackgroundTransparency = 1
-
-	-- Top bar with coins and gems
-	local topBar = Instance.new("Frame")
-	topBar.Size = UDim2.new(1, 0, 0, 50)
-	topBar.Position = UDim2.new(0, 0, 0, 10)
-	topBar.BackgroundTransparency = 1
-	topBar.Parent = container
-
-	local coinsLabel = Instance.new("TextLabel")
-	coinsLabel.Text = "💰 " .. self.state.coins
-	coinsLabel.Size = UDim2.new(0, 100, 0, 40)
-	coinsLabel.Position = UDim2.new(0, 20, 0, 0)
-	coinsLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-	coinsLabel.TextColor3 = Color3.new(1, 1, 1)
-	coinsLabel.TextSize = 16
-	coinsLabel.Parent = topBar
-
-	local gemsLabel = Instance.new("TextLabel")
-	gemsLabel.Text = "💎 " .. self.state.gems
-	gemsLabel.Size = UDim2.new(0, 100, 0, 40)
-	gemsLabel.Position = UDim2.new(0, 140, 0, 0)
-	gemsLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-	gemsLabel.TextColor3 = Color3.new(1, 1, 1)
-	gemsLabel.TextSize = 16
-	gemsLabel.Parent = topBar
-
-	local levelLabel = Instance.new("TextLabel")
-	levelLabel.Text = "⭐ Lv. " .. self.state.level
-	levelLabel.Size = UDim2.new(0, 100, 0, 40)
-	levelLabel.Position = UDim2.new(0, 260, 0, 0)
-	levelLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-	levelLabel.TextColor3 = Color3.new(1, 1, 1)
-	levelLabel.TextSize = 16
-	levelLabel.Parent = topBar
-
-	-- Health bar
-	local healthContainer = Instance.new("Frame")
-	healthContainer.Size = UDim2.new(0, 200, 0, 30)
-	healthContainer.Position = UDim2.new(0, 20, 1, -50)
-	healthContainer.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-	healthContainer.Parent = container
-
-	local healthBar = Instance.new("Frame")
-	healthBar.Size = UDim2.new(self.state.health / 100, 0, 1, 0)
-	healthBar.BackgroundColor3 = Color3.fromRGB(40, 167, 69)
-	healthBar.BorderSizePixel = 0
-	healthBar.Parent = healthContainer
-
-	local healthLabel = Instance.new("TextLabel")
-	healthLabel.Text = "❤️ " .. self.state.health .. "/100"
-	healthLabel.Size = UDim2.new(1, 0, 1, 0)
-	healthLabel.BackgroundTransparency = 1
-	healthLabel.TextColor3 = Color3.new(1, 1, 1)
-	healthLabel.TextSize = 14
-	healthLabel.Parent = healthContainer
-
-	return container
+    print("🎨 HUD RENDER CALLED")
+    
+    local currentCoins = OVHL:GetState("coins", 0)
+    
+    -- Create simple frame
+    local frame = Instance.new("Frame")
+    frame.Name = "HUDMainFrame"
+    frame.Size = UDim2.new(0, 300, 0, 200)
+    frame.Position = UDim2.new(0, 20, 0, 20)
+    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    frame.BorderSizePixel = 0
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+    
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.Position = UDim2.new(0, 0, 0, 0)
+    title.Text = "🎮 OVHL HUD v1.5"
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.TextSize = 18
+    title.Font = Enum.Font.GothamBold
+    title.BackgroundTransparency = 1
+    title.Parent = frame
+    
+    -- Coins Display
+    local coinsLabel = Instance.new("TextLabel")
+    coinsLabel.Name = "CoinsLabel"
+    coinsLabel.Size = UDim2.new(1, -20, 0, 30)
+    coinsLabel.Position = UDim2.new(0, 10, 0, 40)
+    coinsLabel.Text = "💰 Coins: " .. currentCoins
+    coinsLabel.TextColor3 = Color3.new(1, 1, 1)
+    coinsLabel.TextSize = 16
+    coinsLabel.Font = Enum.Font.GothamSemibold
+    coinsLabel.BackgroundTransparency = 1
+    coinsLabel.TextXAlignment = Enum.TextXAlignment.Left
+    coinsLabel.Parent = frame
+    
+    -- Test Button
+    local testButton = Instance.new("TextButton")
+    testButton.Name = "TestButton"
+    testButton.Size = UDim2.new(1, -40, 0, 40)
+    testButton.Position = UDim2.new(0, 20, 0, 120)
+    testButton.Text = "🎯 ADD 10 COINS"
+    testButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+    testButton.TextColor3 = Color3.new(1, 1, 1)
+    testButton.TextSize = 14
+    testButton.Font = Enum.Font.GothamBold
+    
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 6)
+    buttonCorner.Parent = testButton
+    
+    testButton.Parent = frame
+    
+    -- Store reference
+    self._currentGui = frame
+    
+    print("✅ HUD Render Complete - Coins:", currentCoins)
+    return frame
 end
 
 return HUD

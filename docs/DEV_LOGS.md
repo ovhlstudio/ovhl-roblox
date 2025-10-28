@@ -203,625 +203,151 @@ Lanjutkan implementasi **Client-Side APIs** sesuai blueprint v1.1. Pastikan kons
 **LOG END - 28 Oktober 2025 11:20 WIB**
 **SESSION RESULT:** ✅ **FASE 1-3 COMPLETE, READY FOR CLIENT-SIDE DEVELOPMENT**
 
----
+### **🔍 CURRENT SITUATION:**
 
-# 📝 UPDATE DEV LOGS - 28 Oktober 2025 10:30 WIB (CLAUDE)
+**MASALAH:** Framework UI ternyata udah ada dan sophisticated banget, tapi:
 
-## ✅ **YANG SUDAH SELESAI: Bug Fixes & OVHL_Global Stabilization**
+- ✅ **UI System** udah lengkap (Component-based, Reactive State, Templates)
 
-### **SESI DEBUGGING: OVHL_Global.lua Critical Fixes**
+- ✅ **Core Framework** mature (Auto-Discovery, Dependency Injection, Service Layer)
 
-**Konteks:**
+- ✅ **Network Layer** robust (Event-driven communication)
 
-- Developer menemukan banyak error di VSCode (Selene linter)
-- ExampleModule crash saat startup: `attempt to index nil with 'Logger'`
-- OVHL_Global.lua memiliki syntax errors dan path issues
+- ❓ **Dokumentasi & Blueprint** belum ke-export
 
----
+- ❓ **Tim belum aware** scope yang udah ada
 
-### **Problem 1: OVHL_Global.lua Syntax Errors** ❌
+- ❓ **Prioritas development** perlu klarifikasi
 
-**Error yang Ditemukan:**
+### **🎯 OPSI YANG AVAILABLE:**
 
-```
--- BEFORE: Missing 'end' statements (7 locations)
-if cachedServices[serviceName] then
-    return cachedServices[serviceName]
-    -- ❌ MISSING 'end' HERE
-    local success, serviceManager = pcall(function()
+#### **OPTION 1: 🚀 EXTEND & DOCUMENT**
+
+lua
 
 ```
-
-**Root Cause:**
-
-- 7 missing `end` statements di berbagai if blocks
-- Emoji encoding corrupted (🚀 → ðŸš€)
-- Cache checking logic broken
-
-**Solution Applied:** ✅
-
-```
--- AFTER: Proper end statements
-if cachedServices[serviceName] then
-    return cachedServices[serviceName]
-end  -- ✅ FIXED
-
-if IS_SERVER then
-    local success, serviceManager = pcall(function()
-        return require(game.ServerScriptService.OVHL_Server.services.ServiceManager)
-    end)
-
-    if success and serviceManager then
-        local service = serviceManager:GetService(serviceName)
-        if service then
-            cachedServices[serviceName] = service
-            return service
-        end
-    end
-end  -- ✅ FIXED
-
+\-- Fokus: Pakai yang udah ada, extend sesuai kebutuhan
+\-- Effort: LOW | Impact: HIGH
 ```
 
----
+**Action Items:**
 
-### **Problem 2: Wrong ClientController Path** ❌
+- Document semua component UI yang udah ada
 
-**Error:**
+- Bikin contoh implementasi (examples/)
 
-```
--- BEFORE: Path not matching project structure
-return require(game:GetService("Players").LocalPlayer.PlayerScripts.OVHL_Client.controllers.ClientController)
+- Setup development workflow dengan hot-reload
 
-```
+- Extend dengan advanced components (Modal, Carousel, etc)
 
-**Root Cause:**
+#### **OPTION 2: 🎨 THEME & POLISH**
 
-- Project structure tidak punya folder `PlayerScripts.OVHL_Client`
-- ClientController sebenarnya ada di `src/shared/utils/ClientController.lua`
-
-**Solution Applied:** ✅
+lua
 
 ```
--- AFTER: Multiple path fallbacks
-local paths = {
-    function() return require(ReplicatedStorage.OVHL_Shared.utils.ClientController) end,
-    function() return require(script.Parent.utils.ClientController) end,
-}
-
-for _, pathFn in ipairs(paths) do
-    local success, clientController = pcall(pathFn)
-    if success and clientController then
-        -- Found it!
-        return clientController
-    end
-end
-
+\-- Fokus: Improve UX/UI dan consistency
+\-- Effort: MEDIUM | Impact: HIGH (User-facing)
 ```
 
----
+**Action Items:**
 
-### **Problem 3: ExampleModule \_G Usage (Selene Error)** ❌
+- Enhance StyleManager dengan design system
 
-**Error dari Selene:**
+- Add dark/light theme switching
 
-```
-use of `_G` is not allowed, structure your code in a more idiomatic way
+- Implement animation system
 
-```
+- Add responsive layout helpers
 
-**Code:**
+#### **OPTION 3: 🔧 PERFORMANCE & OPTIMIZATION**
 
-```
--- BEFORE: Using _G (bad practice)
-local ovhl = _G.OVHL or require(game.ReplicatedStorage.OVHL_Shared.OVHL_Global)
+lua
 
 ```
-
-**Root Cause:**
-
-- `_G` global pollution tidak idiomatis di Lua
-- Selene linter menandai sebagai anti-pattern
-
-**Solution Applied:** ✅
-
-```
--- AFTER: Proper require with caching
-local ovhlInstance = nil
-
-local function getOVHL()
-    if ovhlInstance then
-        return ovhlInstance
-    end
-
-    -- Try multiple paths
-    local paths = {
-        function() return require(game.ReplicatedStorage.OVHL_Shared.OVHL_Global) end,
-        function() return require(game.ServerScriptService.OVHL_Server.shared.OVHL_Global) end,
-    }
-
-    for _, pathFn in ipairs(paths) do
-        local success, result = pcall(pathFn)
-        if success and result then
-            ovhlInstance = result
-            return ovhlInstance
-        end
-    end
-
-    return nil
-end
-
+\-- Fokus: Optimize yang udah ada
+\-- Effort: MEDIUM | Impact: MEDIUM (Technical)
 ```
 
----
+**Action Items:**
 
-### **Problem 4: Timing Issue - Module Start Before Services Ready** ❌
+- Implement virtual scrolling untuk large lists
 
-**Error di Output:**
+- Add memory leak detection
 
-```
-❌ Module start failed: ExampleModule
-ServerScriptService.OVHL_Server.services.ServiceManager:124:
-attempt to index nil with 'Logger'
+- Optimize re-render patterns
 
-```
+- Add performance monitoring
 
-**Root Cause Analysis:**
+#### **OPTION 4: 📱 NEW FEATURES**
 
-```
-Boot Sequence:
-1. ServiceManager discovers services
-2. ServiceManager initializes services
-3. ModuleLoader starts (as a service)
-4. ModuleLoader loads ExampleModule
-5. ExampleModule tries to access Logger
-6. ❌ BUT Logger.Start() hasn't been called yet!
+lua
 
 ```
-
-**Why This Happens:**
-
-- `ModuleLoader` jalan sebagai bagian dari service initialization
-- `ModuleLoader` langsung load modules di method `:Start()`
-- Services lain belum semua selesai `:Start()`
-- ExampleModule coba akses `ovhl:GetService("Logger")` → returns `nil`
-
-**Solution Applied:** ✅
-
-**A. Defensive Coding di ExampleModule:**
-
-```
--- BEFORE: Assumes Logger exists
-local logger = ovhl:GetService("Logger")
-logger:Info("ExampleModule integrated")  -- ❌ CRASH if nil
-
--- AFTER: Defensive with pcall
-local success, logger = pcall(function()
-    return ovhl:GetService("Logger")
-end)
-
-if success and logger then
-    pcall(function()
-        logger:Info("ExampleModule integrated successfully")
-    end)
-else
-    print("✅ ExampleModule integrated via OVHL (Logger service pending)")
-end
-
+\-- Fokus: Tambah fitur baru yang missing
+\-- Effort: HIGH | Impact: DEPENDS
 ```
 
-**B. Graceful Degradation:**
+**Action Items:**
 
-```
--- Module continues to work even if Logger not ready
-function ExampleModule:LogMessage(message)
-    local ovhl = getOVHL()
-    if ovhl then
-        local logger = ovhl:GetService("Logger")
-        if logger then
-            logger:Info(message)
-            return true
-        end
-    end
+- Form validation system
 
-    -- Fallback to print if service unavailable
-    print("[ExampleModule]", message)
-    return false
-end
+- Chart/Graph components
 
-```
+- Drag & Drop system
 
----
+- Real-time collaboration features
 
-### **Automation: run.sh Script Created** 🔧
+### **🤔 CONSIDERATIONS BUAT NEXT AI:**
 
-**File:** `run.sh` (v4.0)
+#### **Technical Debt yang Perlu Diperhatikan:**
 
-**Features:**
+1.  **ClientController** butuh testing yang lebih comprehensive
 
-- ✅ Auto-backup semua files yang diubah (timestamped)
-- ✅ Fix OVHL_Global.lua (syntax + paths)
-- ✅ Fix ExampleModule.lua (remove \_G + defensive coding)
-- ✅ Multiple path fallbacks untuk robustness
-- ✅ Colored output untuk readability
-- ✅ No human error - one-click fix
+2.  **Dependency cycles** potential di complex modules
 
-**Usage:**
+3.  **Error handling** di beberapa edge cases
 
-```
-chmod +x run.sh
-./run.sh
+4.  **Memory management** untuk long-running sessions
 
-```
+#### **Quick Wins Available:**
 
-**Output:**
+- ✅ Bikin `UI.Modal` component (1-2 jam)
 
-```
-🔧 OVHL Auto-Fix Script v4.0
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📦 Backup directory: archive/auto_backup_20251028_103045
+- ✅ Enhance `StyleManager` dengan CSS variables equivalent (2-3 jam)
 
-🔨 [1/2] Fixing OVHL_Global.lua (path corrections)...
-  ✓ OVHL_Global.lua fixed (path corrections)
+- ✅ Add `UIUtils.CreateTooltip()` (30 menit)
 
-🔨 [2/2] Fixing ExampleModule.lua (defensive coding)...
-  ✓ ExampleModule.lua fixed (defensive coding)
+- ✅ Implement hot-reload untuk development (1 jam)
 
-📋 Summary of fixes:
-  ✓ OVHL_Global.lua - Multiple path fallbacks
-  ✓ OVHL_Global.lua - Better error handling
-  ✓ ExampleModule.lua - Removed _G usage
-  ✓ ExampleModule.lua - Defensive service access
-  ✓ ExampleModule.lua - Won't crash if Logger not ready
-  ✓ Added graceful degradation
+#### **Architecture Decisions Needed:**
 
-📁 Backups saved to: archive/auto_backup_20251028_103045/
-🎉 All done! Error should be fixed now.
+- **State Management**: Redux pattern vs current reactive state?
 
-```
+- **Styling Approach**: CSS-in-JS vs current StyleManager?
 
----
+- **Bundle Strategy**: Code splitting needed?
 
-## 🎯 **STATUS IMPLEMENTASI v1.1 (3 FASE)**
+### **📋 RECOMMENDATION BUAT NEXT AI:**
 
-### **FASE 1: Core Infrastructure** ✅ **SELESAI**
+**Priority Order:**
 
-#### ✅ Implementasi `__manifest` untuk Core Services
+1.  **OPTION 1** (Document & Extend) - Paling urgent
 
-- \[x\] Logger v1.0.0
-- \[x\] EventBus v1.0.0
-- \[x\] ConfigService v1.0.0
-- \[x\] DataService v1.0.0
-- \[x\] RemoteManager v1.0.0
-- \[x\] ModuleLoader v1.0.0
-- \[x\] ServiceManager v1.0.0
+2.  **OPTION 2** (Theme & Polish) - High user impact
 
-#### ✅ OVHL_Global.lua - Critical Fixes
+3.  **OPTION 3** (Performance) - Untuk scaling
 
-- \[x\] Fixed 7 missing `end` statements
-- \[x\] Fixed ClientController path issues
-- \[x\] Added multiple path fallbacks
-- \[x\] Fixed emoji encoding
-- \[x\] Improved error handling
-- \[x\] Added service caching
+4.  **OPTION 4** (New Features) - Kalau ada specific requirements
 
-#### ✅ ExampleModule.lua - Best Practices
+**Pertanyaan buat Product/Team:**
 
-- \[x\] Removed `_G` usage (Selene compliant)
-- \[x\] Defensive service access with pcall
-- \[x\] Graceful degradation if services unavailable
-- \[x\] Added fallback mechanisms
+- Ada deadline specific untuk fitur UI tertentu?
 
-#### ✅ Testing & Verification
+- Target user experience level? (Basic vs Premium)
 
-- \[x\] Zero Selene errors
-- \[x\] Zero runtime crashes
-- \[x\] Auto-discovery working perfectly
-- \[x\] Module loading successful
-- \[x\] Services initialized in correct order
+- Team size dan skill level? (Akan affect complexity choice)
 
----
-
-### **FASE 2: Service Integration & Refactoring** ⏳ **BELUM SELESAI**
-
-**Status:** Ready to start **Estimasi:** 2-3 jam kerja
-
-#### ❌ Tasks Remaining:
-
-**1\. Update Bootstrap Files untuk Expose OVHL Globally**
-
-**File:** `src/server/init.server.lua`
-
-```
--- TODO: Expose OVHL globally
-local OVHL = require(script.Parent.shared.OVHL_Global)
-_G.OVHL = OVHL  -- Make available globally
-
--- Or inject into ServiceManager
-ServiceManager:SetGlobal("OVHL", OVHL)
-
-```
-
-**File:** `src/client/init.client.lua`
-
-```
--- TODO: Expose OVHL globally
-local OVHL = require(game.ReplicatedStorage.OVHL_Shared.OVHL_Global)
-_G.OVHL = OVHL  -- Make available globally
-
-```
-
-**2\. Refactor Core Services to Use OVHL API**
-
-**Files to Update:**
-
-- `src/server/services/Logger.lua`
-- `src/server/services/EventBus.lua`
-- `src/server/services/ConfigService.lua`
-- `src/server/services/DataService.lua`
-- `src/server/services/RemoteManager.lua`
-- `src/server/services/ModuleLoader.lua`
-
-**Example Refactor (EventBus.lua):**
-
-```
--- BEFORE: Manual require
-local Logger = require(script.Parent.Logger)
-
--- AFTER: Use OVHL
-local OVHL = require(game.ReplicatedStorage.OVHL_Shared.OVHL_Global)
-local Logger = OVHL:GetService("Logger")
-
-```
-
-**3\. Refactor Client Controllers**
-
-**Files to Update:**
-
-- `src/client/controllers/StateManager.lua`
-- `src/client/controllers/RemoteClient.lua`
-- `src/client/controllers/UIController.lua`
-- `src/client/controllers/UIEngine.lua`
-- `src/client/controllers/StyleManager.lua`
-
-**4\. Update Module Examples**
-
-**Files to Update:**
-
-- `src/server/modules/gameplay/ExampleModule.lua` ✅ (Already done)
-- `src/client/modules/HUD.lua`
-- `src/client/modules/TestDashboard.lua`
-
----
-
-### **FASE 3: Advanced Features** ⏳ **BELUM DIMULAI**
-
-**Status:** Waiting for Fase 2 **Estimasi:** 3-4 jam kerja
-
-#### ❌ Tasks Pending:
-
-**1\. Implementasi `__config` Reading di ConfigService**
-
-**Goal:** Auto-register module configs saat discovery
-
-```
--- In ModuleLoader:LoadModule()
-if module.__config then
-    local ConfigService = OVHL:GetService("ConfigService")
-    ConfigService:RegisterModuleConfig(moduleName, module.__config)
-end
-
-```
-
-**2\. Enhanced Error Handling dengan pcall Everywhere**
-
-**Checklist:**
-
-- \[ \] EventBus:Subscribe → wrap callbacks in pcall
-- \[ \] RemoteManager:RegisterHandler → wrap handlers in pcall
-- \[ \] ModuleLoader → wrap Init/Start in pcall (Already done ✅)
-- \[ \] All event handlers
-
-**3\. Performance Optimization**
-
-**Tasks:**
-
-- \[ \] Benchmark service access times
-- \[ \] Optimize caching strategies
-- \[ \] Add performance metrics logging
-- \[ \] Profile module loading times
-
-**4\. Documentation Updates**
-
-**Files to Update:**
-
-- \[ \] `docs/01_CORE_FRAMEWORK/1.4_REFERENSI_API.md` - Add real examples
-- \[ \] `docs/02_MODULE_DEVELOPMENT/2.2_RESEP_KODING.md` - Add recipes
-- \[ \] `docs/04_OVHL_TOOLS/README.md` - Document run.sh and tools
-
----
-
-## 🚨 **KNOWN ISSUES & WORKAROUNDS**
-
-### **Issue 1: ServiceManager Path Assumptions**
-
-**Problem:**
-
-- OVHL_Global assumes ServiceManager is at `game.ServerScriptService.OVHL_Server.services.ServiceManager`
-- Project structure might differ in Roblox Studio
-
-**Workaround:**
-
-- Multiple path fallbacks implemented
-- If path wrong, add new fallback to paths array
-
-**Location:** `src/shared/OVHL_Global.lua:24-31`
-
----
-
-### **Issue 2: Module Loading Timing**
-
-**Problem:**
-
-- Modules load during service initialization
-- Some services might not be fully started yet
-- Can cause `nil` access errors
-
-**Workaround:**
-
-- All modules MUST use defensive coding
-- Always pcall service access
-- Provide fallback mechanisms
-
-**Example Pattern:**
-
-```
-local success, service = pcall(function()
-    return OVHL:GetService("ServiceName")
-end)
-
-if success and service then
-    -- Use service
-else
-    -- Fallback behavior
-end
-
-```
-
----
-
-### **Issue 3: ReplicatedStorage Path Variations**
-
-**Problem:**
-
-- OVHL_Global references `game.ReplicatedStorage.OVHL_Shared`
-- Actual structure might be different
-
-**Workaround:**
-
-- Use multiple path attempts in order of likelihood
-- Add project-specific paths as needed
-
-**Current Paths Tried:**
-
-1.  `game.ReplicatedStorage.OVHL_Shared.OVHL_Global`
-2.  `script.Parent.OVHL_Global` (relative)
-3.  `game.ServerScriptService.OVHL_Server.shared.OVHL_Global`
-
----
-
-## 🎯 **NEXT ACTION PLAN: PRIORITAS DEVELOPER BERIKUTNYA**
-
-### **Immediate Next Steps (2-3 jam):**
-
-1.  **Start Fase 2: Service Integration**
-
-    - Update `init.server.lua` dan `init.client.lua`
-    - Expose `OVHL` globally via `_G` or injection
-    - Test access dari services
-
-2.  **Refactor 1 Service as Proof of Concept**
-
-    - Pilih Logger atau EventBus
-    - Convert manual requires → OVHL:GetService()
-    - Test thoroughly
-    - Document pattern
-
-3.  **Create Refactoring Checklist**
-
-    - List all files yang perlu diupdate
-    - Prioritize by dependency order
-    - Create tracking document
-
----
-
-## 📚 **RESOURCES FOR NEXT DEVELOPER**
-
-### **File References:**
-
-**Core Files:**
-
-- `src/shared/OVHL_Global.lua` - Main accessor (FIXED ✅)
-- `src/server/modules/gameplay/ExampleModule.lua` - Example pattern (FIXED ✅)
-- `run.sh` - Auto-fix script (CREATED ✅)
-
-**Documentation:**
-
-- `docs/01_CORE_FRAMEWORK/1.3_ARSITEKTUR_INTI.md` - Architecture overview
-- `docs/01_CORE_FRAMEWORK/1.4_REFERENSI_API.md` - API reference
-- `docs/02_MODULE_DEVELOPMENT/2.1_STANDARDS.md` - Coding standards
-
-**Tools:**
-
-- `run.sh` - One-click fix script
-- `archive/` - Automatic backups
-- `manifest_templates/` - Service templates
-
----
-
-## 🔧 **DEBUGGING TIPS**
-
-### **Common Error: "attempt to index nil with 'X'"**
-
-**Cause:** Service not ready or path wrong
-
-**Debug Steps:**
-
-1.  Check if service has `:Start()` method called
-2.  Verify service is in ServiceManager registry
-3.  Add defensive pcall around access
-4.  Check path in OVHL_Global.lua
-
-### **Common Error: "module not found"**
-
-**Cause:** Require path doesn't match structure
-
-**Debug Steps:**
-
-1.  Print current script location: `print(script:GetFullName())`
-2.  Verify target module exists in game tree
-3.  Use `game:GetService()` for Roblox services
-4.  Add path fallback to OVHL_Global
-
-### **Selene Errors**
-
-**If you see linter errors:**
-
-1.  Run `run.sh` first (auto-fixes common issues)
-2.  Check `selene.toml` config
-3.  Consult `docs/02_MODULE_DEVELOPMENT/2.1_STANDARDS.md`
-
----
-
-## ✅ **VERIFICATION CHECKLIST**
-
-**Before moving to next fase:**
-
-- \[x\] Zero Selene errors in VSCode
-- \[x\] Zero runtime errors in Studio output
-- \[x\] All services initialize successfully
-- \[x\] Auto-discovery works for services
-- \[x\] Auto-discovery works for modules
-- \[x\] ExampleModule loads without crash
-- \[x\] OVHL_Global accessible from modules
-- \[ \] OVHL exposed globally (Fase 2)
-- \[ \] All services refactored to use OVHL (Fase 2)
-- \[ \] `__config` reading implemented (Fase 3)
-
----
-
-**LOG END - 28 Oktober 2025 10:30 WIB**
-
-**SESSION RESULT:** ✅ SUCCESS
-
-- OVHL_Global.lua fully fixed and stable
-- ExampleModule.lua Selene-compliant
-- Zero runtime errors
-- Automation script created
-- Fase 1 complete, ready for Fase 2
-
-**NEXT SESSION:** Execute Fase 2 - Service Integration & Refactoring
-
-**DEVELOPER HANDOFF:** All critical fixes documented above. Use `run.sh` for automated fixes. Follow defensive coding patterns in ExampleModule.lua as template.
+- Performance requirements? (Mobile vs Desktop focus)
 
 ---
 

@@ -40,7 +40,10 @@ local success, err = pcall(function()
 	print("✅ [OVHL] Server bootstrap V.1.0.1 completed!")
 	print("📊 Services: " .. serviceManager:GetServiceCount())
 
-	return serviceManager
+    -- Export OVHL Global Accessor
+    _G.OVHL = require(game.ReplicatedStorage.OVHL_Shared.OVHL_Global)
+
+    return serviceManager
 end)
 
 if not success then

@@ -1,10 +1,22 @@
--- ModuleLoader v6 - WITH AUTO-DISCOVERY & MANIFEST SUPPORT
+-- ModuleLoader v1 - WITH AUTO-DISCOVERY & MANIFEST SUPPORT
 local ModuleLoader = {}
 ModuleLoader.__index = ModuleLoader
 
+-- 🔥 MANIFEST FOR AUTO-DISCOVERY
+ModuleLoader.__manifest = {
+    name = "ModuleLoader",
+    version = "1.0.0",
+    type = "service",
+    domain = "core",
+    dependencies = {"Logger", "EventBus", "ConfigService", "DataService", "RemoteManager"},
+    autoload = true,
+    priority = 50,
+    description = "Dynamic module loading with auto-discovery"
+}
+
 function ModuleLoader:Init()
     self.modules = {}
-    print("🔧 ModuleLoader v6 initialized (Auto-Discovery)")
+    print("🔧 ModuleLoader v1 initialized (Auto-Discovery)")
     return true
 end
 

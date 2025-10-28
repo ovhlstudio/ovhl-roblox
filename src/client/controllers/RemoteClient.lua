@@ -3,15 +3,16 @@ local RemoteClient = {}
 RemoteClient.__index = RemoteClient
 
 -- 🔥 MANIFEST FOR AUTO-DISCOVERY
+-- 🔥 MANIFEST FOR AUTO-DISCOVERY
 RemoteClient.__manifest = {
-	name = "RemoteClient",
-	version = "5.0.0",
-	type = "controller",
-	domain = "network",
-	dependencies = {},
-	autoload = true,
-	priority = 100,
-	description = "Client-server communication controller",
+    name = "RemoteClient",
+    version = "1.0.0",
+    type = "controller",
+    domain = "network",
+    dependencies = {},
+    autoload = true,
+    priority = 100,
+    description = "Client-server communication controller",
 }
 
 function RemoteClient:Init()

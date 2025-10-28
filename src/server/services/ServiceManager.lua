@@ -2,6 +2,18 @@
 local ServiceManager = {}
 ServiceManager.__index = ServiceManager
 
+-- 🔥 MANIFEST FOR AUTO-DISCOVERY
+ServiceManager.__manifest = {
+    name = "ServiceManager",
+    version = "1.0.0",
+    type = "service",
+    domain = "core",
+    dependencies = {},
+    autoload = true,
+    priority = 100,
+    description = "Core service management with auto-discovery"
+}
+
 function ServiceManager:Init()
 	self.services = {}
 	self.serviceStates = {}

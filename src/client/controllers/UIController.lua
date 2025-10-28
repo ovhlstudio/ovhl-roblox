@@ -3,15 +3,16 @@ local UIController = {}
 UIController.__index = UIController
 
 -- 🔥 MANIFEST FOR AUTO-DISCOVERY
+-- 🔥 MANIFEST FOR AUTO-DISCOVERY
 UIController.__manifest = {
-	name = "UIController",
-	version = "5.0.0",
-	type = "controller",
-	domain = "ui",
-	dependencies = { "UIEngine" },
-	autoload = true,
-	priority = 70,
-	description = "UI screen management controller",
+    name = "UIController",
+    version = "1.0.0",
+    type = "controller",
+    domain = "ui",
+    dependencies = { "UIEngine" },
+    autoload = true,
+    priority = 70,
+    description = "UI screen management controller",
 }
 
 function UIController:Init()

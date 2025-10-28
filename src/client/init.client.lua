@@ -36,11 +36,14 @@ local success, err = pcall(function()
 	clientManager:AutoDiscoverModules(modulesFolder, uiController)
 
 	-- Auto-show initial screen
-	clientManager:ShowInitialScreen(uiController, "GameHUD")
+	clientManager:ShowInitialScreen(uiController, "HUD")
 
 	print("✅ [OVHL] Client bootstrap V.1.0.1 completed successfully!")
 
-	return {
+    -- Export OVHL Global Accessor
+    _G.OVHL = require(game.ReplicatedStorage.OVHL_Shared.OVHL_Global)
+
+    return {
 		ClientController = clientManager,
 		RemoteClient = clientManager:GetController("RemoteClient"),
 		StateManager = stateManager,

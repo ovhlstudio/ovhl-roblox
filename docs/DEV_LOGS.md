@@ -19,6 +19,101 @@
 
 ---
 
+# 📝 UPDATE DEV LOGS - 28 Oktober 2025 (DEEPSEEK)
+
+## ✅ **YANG SUDAH SELESAI (PRIORITAS 1):**
+
+### Implementasi `__manifest` untuk Core Services - **SUKSES**
+
+- ✅ Semua 6 Core Services memiliki `__manifest` v1.0.0
+- ✅ Auto-discovery system bekerja sempurna
+- ✅ Zero errors di server & client bootstrap
+- ✅ ExampleModule terload tanpa issues
+- ✅ Logger integrated dengan proper logging
+
+### Services yang Sudah Di-update:
+
+1. **Logger** v1.0.0 - Core logging service
+2. **EventBus** v1.0.0 - Event-driven communication
+3. **ConfigService** v1.0.0 - Configuration management
+4. **DataService** v1.0.0 - Data persistence
+5. **RemoteManager** v1.0.0 - Client-server communication
+6. **ModuleLoader** v1.0.0 - Dynamic module loading
+7. **ServiceManager** v1.0.0 - Core service management
+
+## 🎯 **NEXT ACTION PLAN: PRIORITAS 2**
+
+### **Tugas Berikutnya: Implementasi Global Accessor `OVHL`**
+
+**File Target:** `src/shared/OVHL_Global.lua`
+
+**Fungsi:**
+
+- Menyediakan single entry point untuk semua core systems
+- Menggantikan manual `require` untuk service/controller access
+- Menyederhanakan API untuk module developers
+
+**API yang Akan Diimplementasi:**
+
+```lua
+-- Server & Client (Shared)
+OVHL:GetService(name)     -- Get core service/controller
+OVHL:GetModule(name)      -- Get game module
+OVHL:GetConfig(moduleName) -- Get module configuration
+
+-- Server-Side Only
+OVHL:Emit(eventName, ...)    -- Emit internal event
+OVHL:Subscribe(eventName, callback) -- Subscribe to internal event
+
+-- Client-Side Only
+OVHL:SetState(key, value)    -- Set client state
+OVHL:GetState(key)          -- Get client state
+OVHL:Fire(eventName, ...)   -- Fire event to server
+OVHL:Invoke(eventName, ...) -- Invoke server function
+OVHL:Listen(eventName, callback) -- Listen to server events
+```
+
+**Integration Points:**
+
+- Integrasi dengan ServiceManager (server)
+- Integrasi dengan ClientController (client)
+- Integrasi dengan StateManager, RemoteClient, EventBus
+- Backward compatibility dengan existing code
+
+## 📋 **RENCANA IMPLEMENTASI:**
+
+### Phase 1: Create `OVHL_Global.lua`
+
+- Buat file dengan struktur dasar
+- Implementasi core accessor methods
+- Setup proper metatable
+
+### Phase 2: Update Bootstrap Files
+
+- Update `init.server.lua` untuk expose OVHL
+- Update `init.client.lua` untuk expose OVHL
+- Setup proper environment detection
+
+### Phase 3: Update Core Services & Modules
+
+- Refactor existing code untuk menggunakan `OVHL` accessor
+- Hapus manual `require` statements yang tidak perlu
+- Test integration
+
+### Phase 4: Comprehensive Testing
+
+- Test semua API methods
+- Verify backward compatibility
+- Performance testing
+
+---
+
+**READY FOR PRIORITAS 2?** 🚀
+
+Mau langsung eksekusi implementasi `OVHL_Global.lua` atau ada penyesuaian rencana?
+
+---
+
 ### 🗓️ **SESI STRATEGIS: 28 Oktober 2025 09:00 WIB** (REVISI ARSITEKTUR v1.1)
 
 **BRANCH:** `docs/architecture-overhaul-v1.1`

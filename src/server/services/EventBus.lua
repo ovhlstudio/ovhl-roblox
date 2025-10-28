@@ -1,6 +1,18 @@
--- EventBus v5 - Simple Event System
+-- EventBus v1 - Simple Event System
 local EventBus = {}
 EventBus.__index = EventBus
+
+-- 🔥 MANIFEST FOR AUTO-DISCOVERY
+EventBus.__manifest = {
+    name = "EventBus",
+    version = "1.0.0",
+    type = "service",
+    domain = "core",
+    dependencies = {"Logger"},
+    autoload = true,
+    priority = 95,
+    description = "Event-driven communication system"
+}
 
 function EventBus:Init()
     self.listeners = {}

@@ -3,15 +3,16 @@ local UIEngine = {}
 UIEngine.__index = UIEngine
 
 -- 🔥 MANIFEST FOR AUTO-DISCOVERY
+-- 🔥 MANIFEST FOR AUTO-DISCOVERY
 UIEngine.__manifest = {
-	name = "UIEngine",
-	version = "5.0.0",
-	type = "controller",
-	domain = "ui",
-	dependencies = { "StateManager" },
-	autoload = true,
-	priority = 80,
-	description = "UI component rendering engine",
+    name = "UIEngine",
+    version = "1.0.0",
+    type = "controller",
+    domain = "ui",
+    dependencies = { "StateManager" },
+    autoload = true,
+    priority = 80,
+    description = "UI component rendering engine",
 }
 
 function UIEngine:Init()

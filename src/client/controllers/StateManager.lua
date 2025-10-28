@@ -3,15 +3,16 @@ local StateManager = {}
 StateManager.__index = StateManager
 
 -- 🔥 MANIFEST FOR AUTO-DISCOVERY
+-- 🔥 MANIFEST FOR AUTO-DISCOVERY
 StateManager.__manifest = {
-	name = "StateManager",
-	version = "5.0.0",
-	type = "controller",
-	domain = "data",
-	dependencies = {},
-	autoload = true,
-	priority = 90,
-	description = "Client-side state management",
+    name = "StateManager",
+    version = "1.0.0",
+    type = "controller",
+    domain = "data",
+    dependencies = {},
+    autoload = true,
+    priority = 90,
+    description = "Client-side state management",
 }
 
 function StateManager:Init()

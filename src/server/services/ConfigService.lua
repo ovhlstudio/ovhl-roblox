@@ -1,6 +1,18 @@
--- ConfigService v5 - Simple Config
+-- ConfigService v1 - Simple Config
 local ConfigService = {}
 ConfigService.__index = ConfigService
+
+-- 🔥 MANIFEST FOR AUTO-DISCOVERY
+ConfigService.__manifest = {
+    name = "ConfigService",
+    version = "1.0.0",
+    type = "service",
+    domain = "core",
+    dependencies = {},
+    autoload = true,
+    priority = 90,
+    description = "Configuration management service"
+}
 
 function ConfigService:Init()
     self.configs = {}
